@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DualSense Drift Tester</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" href="data:,">
+</head>
+<body>
+  <header class="app-header">
+    <h1>DualSense <span>Drift Tester</span></h1>
+    <p id="connection" class="badge">Sin mando</p>
+  </header>
+
+  <main>
+    <section id="help" class="card help">
+      <h2>No se detecta ningún mando</h2>
+      <ol>
+        <li><strong>USB:</strong> conecta el DualSense con un cable que transmita datos (algunos cables solo cargan).</li>
+        <li><strong>Bluetooth:</strong> con el mando apagado, mantén pulsados <em>PS</em> y <em>Create</em> (el botón pequeño junto al panel táctil) hasta que la luz parpadee rápido, y vincúlalo desde los ajustes Bluetooth de tu sistema.</li>
+        <li><strong>Pulsa cualquier botón del mando.</strong> El navegador no muestra el mando hasta que lo tocas.</li>
+        <li>Usa <strong>Chrome o Edge</strong> de escritorio y cierra Steam u otros programas que puedan capturar el mando.</li>
+      </ol>
+      <p class="hint">
+        El nombre que muestre el navegador depende del sistema y no garantiza
+        que el mando sea un DualSense original.
+      </p>
+    </section>
+    <div id="sticks">
+      <section class="card">
+        <h2>Stick izquierdo</h2>
+        <canvas id="canvasL" width="300" height="300"></canvas>
+        <pre id="statsL"></pre>
+        <p class="graph-title">Desviación en el tiempo <span id="scaleL"></span></p>
+        <canvas id="graphL" class="graph" width="340" height="120"></canvas>
+        <p id="verdictL" class="verdict" hidden></p>
+      </section>
+
+      <section class="card">
+        <h2>Stick derecho</h2>
+        <canvas id="canvasR" width="300" height="300"></canvas>
+        <pre id="statsR"></pre>
+        <p class="graph-title">Desviación en el tiempo <span id="scaleR"></span></p>
+        <canvas id="graphR" class="graph" width="340" height="120"></canvas>
+        <p id="verdictR" class="verdict" hidden></p>
+      </section>
+    </div>
+
+    <section class="card panel">
+      <p id="status">Conecta un mando</p>
+
+      <div id="controls">
+        <label>Duración
+          <select id="duration">
+            <option value="10">10 s</option>
+            <option value="30" selected>30 s</option>
+            <option value="60">60 s</option>
+            <option value="120">120 s</option>
+          </select>
+        </label>
+        <label>Umbral
+          <input id="threshold" type="number" min="0.01" max="0.30" step="0.01" value="0.05">
+        </label>
+        <button id="startBtn" class="btn primary">Iniciar prueba</button>
+        <button id="resetBtn" class="btn">Reiniciar</button>
+      </div>
+    </section>
+    <section class="card panel history">
+      <p id="historyCount">Pruebas guardadas: 0</p>
+      <div class="row">
+        <button id="exportBtn" class="btn">Exportar CSV</button>
+        <button id="clearBtn" class="btn danger">Borrar historial</button>
+      </div>
+      <p id="historyMsg" class="hint">
+        El historial se guarda solo en este navegador. No se envía a ningún servidor.
+      </p>
+    </section>
+    <p class="disclaimer">
+      Herramienta orientativa: no sustituye una revisión física del mando.
+      Las zonas muertas de los juegos pueden ocultar desviaciones pequeñas.
+    </p>
+  </main>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
