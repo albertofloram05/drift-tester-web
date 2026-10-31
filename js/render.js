@@ -108,6 +108,7 @@ export function formatStats(cur, stats, threshold) {
 }
 
 /** Muestra u oculta el veredicto y le pone la clase de color. */
+/** Muestra u oculta el veredicto y le pone la clase de color. */
 export function setVerdict(el, level) {
   if (!level) {
     el.hidden = true;
@@ -115,7 +116,10 @@ export function setVerdict(el, level) {
   }
   el.hidden = false;
   el.textContent = VERDICT[level];
-  el.className = 'verdict ' + level.toLowerCase();   // p. ej. "verdict possible_drift"
+
+  // classList modifica solo lo necesario y conserva las demás clases (static-only...)
+  el.classList.remove('normal', 'possible_drift', 'significant_drift');
+  el.classList.add(level.toLowerCase());
 }
 
 /** Gráfica de la distancia al centro. Devuelve la escala vertical usada. */
