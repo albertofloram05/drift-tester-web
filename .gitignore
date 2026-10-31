@@ -1,0 +1,17 @@
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/
+*.swp
+
+# Dependencias, por si algún día usas npm
+node_modules/
+
+# Registros
+*.log
+
+# CSV exportados con la app (son datos personales de tus pruebas)
+drift-resultados*.csv
