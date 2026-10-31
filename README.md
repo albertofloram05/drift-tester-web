@@ -112,4 +112,4 @@ Nació como una aplicación de escritorio en Java (JavaFX + LWJGL) y se reescrib
 
 ## Licencia
 
-Pendiente de elegir. Hasta que se añada un archivo `LICENSE`, todos los derechos quedan reservados por defecto.
+Distribuido bajo la licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más información.
