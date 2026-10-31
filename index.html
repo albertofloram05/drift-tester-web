@@ -10,10 +10,15 @@
   <link rel="stylesheet" href="css/styles.css">
   <link rel="icon" href="data:,">
 </head>
-<body>
+<body data-mode="static">
   <header class="app-header">
     <h1>DualSense <span>Drift Tester</span></h1>
     <p id="connection" class="badge">Sin mando</p>
+
+    <div class="mode-switch" role="group" aria-label="Modo de prueba">
+      <button id="modeStatic" class="mode-btn active" type="button">Modo estático</button>
+      <button id="modeMotion" class="mode-btn" type="button">Modo movimiento</button>
+    </div>
   </header>
 
   <main>
@@ -30,27 +35,42 @@
         que el mando sea un DualSense original.
       </p>
     </section>
+
     <div id="sticks">
       <section class="card">
         <h2>Stick izquierdo</h2>
         <canvas id="canvasL" width="300" height="300"></canvas>
-        <pre id="statsL"></pre>
-        <p class="graph-title">Desviación en el tiempo <span id="scaleL"></span></p>
-        <canvas id="graphL" class="graph" width="340" height="120"></canvas>
-        <p id="verdictL" class="verdict" hidden></p>
+
+        <pre id="statsL" class="static-only"></pre>
+        <p class="graph-title static-only">Desviación en el tiempo <span id="scaleL"></span></p>
+        <canvas id="graphL" class="graph static-only" width="340" height="120"></canvas>
+        <p id="verdictL" class="verdict static-only" hidden></p>
+
+        <pre id="motionL" class="motion-only"></pre>
       </section>
 
       <section class="card">
         <h2>Stick derecho</h2>
         <canvas id="canvasR" width="300" height="300"></canvas>
-        <pre id="statsR"></pre>
-        <p class="graph-title">Desviación en el tiempo <span id="scaleR"></span></p>
-        <canvas id="graphR" class="graph" width="340" height="120"></canvas>
-        <p id="verdictR" class="verdict" hidden></p>
+
+        <pre id="statsR" class="static-only"></pre>
+        <p class="graph-title static-only">Desviación en el tiempo <span id="scaleR"></span></p>
+        <canvas id="graphR" class="graph static-only" width="340" height="120"></canvas>
+        <p id="verdictR" class="verdict static-only" hidden></p>
+
+        <pre id="motionR" class="motion-only"></pre>
       </section>
     </div>
 
-    <section class="card panel">
+    <!-- Solo modo movimiento -->
+    <section class="card panel motion-only">
+      <p>Mueve cada stick en todas las direcciones, hasta el borde, y suéltalo.
+         Los sectores se iluminan según hasta dónde llegues.</p>
+      <button id="motionResetBtn" class="btn">Reiniciar modo movimiento</button>
+    </section>
+
+    <!-- Solo modo estático -->
+    <section class="card panel static-only">
       <p id="status">Conecta un mando</p>
 
       <div id="controls">
@@ -69,7 +89,8 @@
         <button id="resetBtn" class="btn">Reiniciar</button>
       </div>
     </section>
-    <section class="card panel history">
+
+    <section class="card panel history static-only">
       <p id="historyCount">Pruebas guardadas: 0</p>
       <div class="row">
         <button id="exportBtn" class="btn">Exportar CSV</button>
@@ -79,6 +100,7 @@
         El historial se guarda solo en este navegador. No se envía a ningún servidor.
       </p>
     </section>
+
     <p class="disclaimer">
       Herramienta orientativa: no sustituye una revisión física del mando.
       Las zonas muertas de los juegos pueden ocultar desviaciones pequeñas.

@@ -1,24 +1,25 @@
 export const TRAIL_MS = 500;   // cuánto tiempo recordamos el recorrido
+import { MotionAnalyzer } from './motionAnalyzer.js';
 
 /** Dibuja un stick en su canvas. x e y van de -1 a 1. */
-export function drawStick(canvas, x, y, stats, trail, now) {
-  // Ajustar la resolución interna al tamaño real en pantalla (nitidez)
+/** Dibuja un stick. 'stats' y 'sectors' pueden ser null según el modo. */
+export function drawStick(canvas, x, y, stats, trail, now, sectors = null) {
   const dpr = window.devicePixelRatio || 1;
   const size = canvas.clientWidth;
-  if (size === 0) return;                    // oculto: nada que dibujar
+  if (size === 0) return;
 
   const px = Math.round(size * dpr);
   if (canvas.width !== px || canvas.height !== px) {
-    canvas.width = px;                       // solo si cambió: asignarlo borra el canvas
+    canvas.width = px;
     canvas.height = px;
   }
 
   const ctx = canvas.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);    // se dibuja en píxeles CSS
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, size, size);
 
-  const c = size / 2;          // centro
-  const r = size * 0.4;        // radio
+  const c = size / 2;
+  const r = size * 0.4;
 
   // Círculo exterior (límites del movimiento)
   ctx.strokeStyle = '#3b82f6';
@@ -35,8 +36,24 @@ export function drawStick(canvas, x, y, stats, trail, now) {
   ctx.moveTo(c, c - r); ctx.lineTo(c, c + r);
   ctx.stroke();
 
-  // Centro medio calculado (marca amarilla), solo si ya hay muestras
-  if (stats.count > 0) {
+  // Anillo de sectores (solo modo movimiento)
+  if (sectors) {
+    const step = (Math.PI * 2) / sectors.length;
+    ctx.lineWidth = 7;
+    sectors.forEach((reach, i) => {
+      const a0 = -Math.PI + i * step + 0.05;       // mismo reparto que MotionAnalyzer
+      const a1 = -Math.PI + (i + 1) * step - 0.05;
+      ctx.strokeStyle = reach >= MotionAnalyzer.EXTREME ? '#22c55e'   // llegó al extremo
+                      : reach > 0.2 ? '#f59e0b'                       // se movió, sin llegar
+                      : '#252c3a';                                    // sin explorar
+      ctx.beginPath();
+      ctx.arc(c, c, size * 0.455, a0, a1);
+      ctx.stroke();
+    });
+  }
+
+  // Centro medio calculado (marca amarilla), solo si hay datos de prueba
+  if (stats && stats.count > 0) {
     ctx.fillStyle = '#facc15';
     ctx.beginPath();
     ctx.arc(c + stats.meanX * r, c + stats.meanY * r, 4, 0, Math.PI * 2);
@@ -156,4 +173,21 @@ export function drawGraph(canvas, stats, threshold) {
   }
   ctx.stroke();
   return scaleMax;
+}
+
+/** Texto del modo movimiento para un stick. */
+export function formatMotion(m) {
+  const lines = [
+    `Alcance máx: ${m.maxReach.toFixed(3)}`,
+    `Sectores:    ${m.sectorsReached} / ${m.sectorReach.length}`,
+    `Picos:       ${m.spikes}`,
+    `Sueltas:     ${m.returns.length}`,
+  ];
+  if (m.returns.length > 0) {
+    lines.push(
+      `Residuo med: ${m.avgResidual.toFixed(3)}`,
+      `Residuo máx: ${m.maxResidual.toFixed(3)}`,
+    );
+  }
+  return lines.join('\n');
 }

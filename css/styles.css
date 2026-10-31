@@ -317,6 +317,49 @@ select:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .help .hint { margin: 0; }
 
+/* ---------- Selector de modo ---------- */
+.mode-switch {
+  display: flex;
+  width: fit-content;
+  margin: 14px auto 0;
+  padding: 4px;
+  gap: 4px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.mode-btn {
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.mode-btn:hover { color: var(--text); }
+
+.mode-btn.active {
+  background: var(--blue);
+  color: #fff;
+}
+
+/* ---------- Visibilidad según el modo ---------- */
+.motion-only { display: none; }
+
+[data-mode="motion"] .static-only { display: none !important; }
+[data-mode="motion"] .motion-only { display: block; }
+[data-mode="motion"] pre.motion-only { display: inline-block; }
+
+.panel p { margin: 0 0 12px; }
+
+
 /* ---------- Pantallas pequeñas ---------- */
 @media (max-width: 480px) {
   main { padding: 10px; }
