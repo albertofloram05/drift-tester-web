@@ -105,3 +105,72 @@ export class MotionAnalyzer {
     return this.#returns.length === 0 ? 0 : Math.max(...this.#returns);
   }
 }
+
+// ---------- Observaciones (valores iniciales míos, no estándares) ----------
+const RESIDUAL_OK = 0.05;     // por debajo: vuelve bien al centro
+const RESIDUAL_WARN = 0.10;   // por encima: conviene revisarlo
+
+// Los sectores empiezan en -180° y cada uno mide 45°. Los ejes caen en los bordes,
+// así que cada sector se nombra por el lado en el que está.
+const SECTOR_NAMES = [
+  'izquierda (parte alta)',  'arriba (parte izquierda)',
+  'arriba (parte derecha)',  'derecha (parte alta)',
+  'derecha (parte baja)',    'abajo (parte derecha)',
+  'abajo (parte izquierda)', 'izquierda (parte baja)',
+];
+
+/** Convierte las medidas de un analizador en una lista de observaciones. */
+export function observe(m) {
+  const list = [];
+  const C = MotionAnalyzer;
+
+  if (m.maxReach < 0.2) {
+    list.push({ level: 'info',
+      text: 'Mueve el stick en todas las direcciones, hasta el borde, y suéltalo.' });
+    return list;
+  }
+
+  // 1) Direcciones y extremos
+  const missing = m.sectorReach
+    .map((v, i) => (v >= C.EXTREME ? null : SECTOR_NAMES[i]))
+    .filter(Boolean);
+
+  if (m.sectorsReached === 0) {
+    list.push({ level: 'info',
+      text: `El alcance máximo es ${m.maxReach.toFixed(2)}. Empuja hasta el borde para comprobar los extremos.` });
+  } else if (missing.length === 0) {
+    list.push({ level: 'ok', text: 'Llega cerca del extremo en las 8 zonas.' });
+  } else {
+    list.push({ level: 'info',
+      text: `Extremo alcanzado en ${m.sectorsReached} de 8 zonas. Faltan: ${missing.join(', ')}.` });
+  }
+
+  // 2) Picos aislados
+  if (m.spikes > 0) {
+    list.push({ level: 'warn',
+      text: `${m.spikes} pico(s) aislado(s): el valor saltó y volvió en menos de 100 ms. ` +
+            'Puede ser un golpe rápido al stick o una anomalía de lectura; repite con movimientos ' +
+            'suaves y, si aparecen con el stick quieto, conviene revisarlo.' });
+  } else {
+    list.push({ level: 'ok', text: 'No se detectaron picos aislados.' });
+  }
+
+  // 3) Vuelta al centro
+  if (m.returns.length === 0) {
+    list.push({ level: 'info',
+      text: 'Aún no hay sueltas medidas: lleva el stick lejos del centro y suéltalo.' });
+  } else if (m.maxResidual < RESIDUAL_OK) {
+    list.push({ level: 'ok',
+      text: `Vuelve al centro con precisión (residuo máximo ${m.maxResidual.toFixed(3)}).` });
+  } else if (m.maxResidual < RESIDUAL_WARN) {
+    list.push({ level: 'info',
+      text: `Tras soltar queda algo desplazado (residuo máximo ${m.maxResidual.toFixed(3)}). ` +
+            'Compáralo con el modo estático.' });
+  } else {
+    list.push({ level: 'warn',
+      text: `Tras soltar queda a ${m.maxResidual.toFixed(3)} del centro. Repite la prueba y, ` +
+            'si se mantiene, mide el reposo en el modo estático.' });
+  }
+
+  return list;
+}

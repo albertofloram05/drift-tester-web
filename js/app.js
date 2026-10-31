@@ -1,8 +1,9 @@
 import { GamepadReader } from './gamepadReader.js';
 import { DriftTester, State } from './driftTester.js';
 import { evaluate } from './evaluator.js';
-import { MotionAnalyzer } from './motionAnalyzer.js';
-import { drawStick, formatStats, formatMotion, setVerdict, drawGraph, TRAIL_MS } from './render.js';
+import { MotionAnalyzer, observe } from './motionAnalyzer.js';
+import { drawStick, formatStats, formatMotion, setVerdict, drawGraph,
+         drawMotionGraph, setObservations, TRAIL_MS } from './render.js';
 import { buildResult, save, count, clear, loadAll, downloadCsv } from './history.js';
 
 const reader = new GamepadReader();
@@ -139,8 +140,14 @@ function frame(now) {
     drawStick($('canvasL'), cur.l.x, cur.l.y, null, trailL, now, motionL.sectorReach);
     drawStick($('canvasR'), cur.r.x, cur.r.y, null, trailR, now, motionR.sectorReach);
 
+    drawMotionGraph($('motionGraphL'), motionL.recent, now);
+    drawMotionGraph($('motionGraphR'), motionR.recent, now);
+
     $('motionL').textContent = formatMotion(motionL);
     $('motionR').textContent = formatMotion(motionR);
+
+    setObservations($('obsL'), observe(motionL));
+    setObservations($('obsR'), observe(motionR));
   }
 }
 

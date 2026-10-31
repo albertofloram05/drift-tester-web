@@ -191,3 +191,75 @@ export function formatMotion(m) {
   }
   return lines.join('\n');
 }
+
+/** Gráfica de X e Y de los últimos segundos. Valores de -1 a 1; positivo arriba. */
+export function drawMotionGraph(canvas, recent, now) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  if (w === 0 || h === 0) return;
+
+  const bw = Math.round(w * dpr), bh = Math.round(h * dpr);
+  if (canvas.width !== bw || canvas.height !== bh) {
+    canvas.width = bw;
+    canvas.height = bh;
+  }
+
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  const mid = h / 2;
+  const yOf = v => mid - v * mid * 0.94;     // 0,94 deja un margen para el grosor de la línea
+
+  // Línea del centro (0)
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, mid);
+  ctx.lineTo(w, mid);
+  ctx.stroke();
+
+  // Líneas del "extremo" (±0,9), discontinuas y discretas
+  ctx.strokeStyle = '#2f3640';
+  ctx.setLineDash([4, 4]);
+  for (const v of [MotionAnalyzer.EXTREME, -MotionAnalyzer.EXTREME]) {
+    ctx.beginPath();
+    ctx.moveTo(0, yOf(v));
+    ctx.lineTo(w, yOf(v));
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // Una línea por eje. A la derecha está "ahora"; a la izquierda, hace 10 s.
+  const plot = (key, color) => {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    let started = false;
+    for (const p of recent) {
+      const px = w - (now - p.t) / MotionAnalyzer.WINDOW_MS * w;
+      if (px < 0) continue;                  // más antiguo que la ventana
+      const py = yOf(p[key]);
+      if (!started) { ctx.moveTo(px, py); started = true; }
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  };
+  plot('x', '#3b82f6');
+  plot('y', '#f472b6');
+}
+
+/** Pinta la lista de observaciones, solo si ha cambiado algo. */
+export function setObservations(el, list) {
+  const sig = list.map(o => o.level + o.text).join('|');
+  if (el.dataset.sig === sig) return;        // nada nuevo: no tocamos el HTML
+  el.dataset.sig = sig;
+
+  el.replaceChildren(...list.map(o => {
+    const li = document.createElement('li');
+    li.className = o.level;                    // ok | info | warn
+    li.textContent = o.text;
+    return li;
+  }));
+}

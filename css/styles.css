@@ -359,6 +359,50 @@ select:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .panel p { margin: 0 0 12px; }
 
+/* ---------- Modo movimiento: leyenda y observaciones ---------- */
+.legend { margin-left: 10px; }
+
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin: 0 4px 0 8px;
+  border-radius: 50%;
+}
+.dot.x { background: #3b82f6; }
+.dot.y { background: #f472b6; }
+
+.observations {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  text-align: left;
+}
+
+.observations li {
+  margin: 0 0 8px;
+  padding: 9px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.observations li.ok {
+  color: var(--green);
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.35);
+}
+.observations li.info {
+  color: #b8c0cc;
+  background: rgba(139, 148, 167, 0.08);
+  border-color: var(--border);
+}
+.observations li.warn {
+  color: var(--orange);
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.4);
+}
 
 /* ---------- Pantallas pequeñas ---------- */
 @media (max-width: 480px) {
