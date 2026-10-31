@@ -1,3 +1,13 @@
+/** Limpia el id que da el navegador y deja solo el nombre del mando. */
+export function friendlyName(id) {
+  let name = id;
+  // Chrome, Brave, Edge: "Nombre (STANDARD GAMEPAD Vendor: 054c Product: 0ce6)"
+  name = name.replace(/\s*\((?:STANDARD GAMEPAD\s*)?Vendor:.*\)\s*$/i, '');
+  // Firefox: "054c-0ce6-Nombre"
+  name = name.replace(/^[0-9a-f]{4}-[0-9a-f]{4}-/i, '');
+  return name.trim() || id;   // si algo sale vacío, devolvemos el id original
+}
+
 /** Habla con el mando mediante la Gamepad API del navegador. */
 export class GamepadReader {
   #index = null;   // índice del mando elegido; null = ninguno
@@ -20,7 +30,8 @@ export class GamepadReader {
 
   /** Nombre que el navegador da al mando (puede variar según el sistema). */
   name() {
-    return this.#pad()?.id ?? 'Sin mando';
+    const pad = this.#pad();
+    return pad ? friendlyName(pad.id) : 'Sin mando';
   }
 
   /** 'standard' si el navegador ya traduce el mando al formato estándar. */
