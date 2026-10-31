@@ -2,7 +2,7 @@
 
 Herramienta web para comprobar si los sticks analógicos de un mando **DualSense (PS5)** presentan *drift*: desviaciones del centro o fluctuaciones cuando nadie los toca.
 
-**Pruébala aquí:** https://albertofloram05.github.io/drift-tester-web/
+**Pruébala aquí:** https://drifttester.com/
 
 > ⚠️ **Herramienta orientativa.** No sustituye una revisión física del mando. Las zonas muertas de los juegos pueden ocultar desviaciones pequeñas, y los resultados dependen de lo que el navegador y el sistema operativo reportan, no de una medida física del recorrido del stick.
 
