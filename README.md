@@ -110,6 +110,10 @@ La lógica (`stickStats`, `evaluator`, `driftTester`, `motionAnalyzer`) no depen
 
 Nació como una aplicación de escritorio en Java (JavaFX + LWJGL) y se reescribió en JavaScript para poder compartirla con un simple enlace.
 
+## Apoyar el proyecto
+
+Es gratuito y sin anuncios. Si te resulta útil, puedes [invitarme a un café](https://ko-fi.com/albertofloram05).
+
 ## Licencia
 
 Distribuido bajo la licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más información.
