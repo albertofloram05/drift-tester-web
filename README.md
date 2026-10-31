@@ -103,7 +103,8 @@ La lógica (`stickStats`, `evaluator`, `driftTester`, `motionAnalyzer`) no depen
 - **La Gamepad API no garantiza una frecuencia de muestreo fija.** Las muestras se recogen en cada fotograma, así que dependen de la frecuencia de tu pantalla.
 - **El eje horizontal de la gráfica estática reparte muestras, no segundos.** La gráfica del modo movimiento sí usa tiempo real.
 - **No se garantiza identificar un DualSense original.** El nombre que muestra el navegador depende del sistema y del navegador.
-- **Navegadores:** pensada para Chrome y Edge de escritorio. En otros navegadores la Gamepad API puede comportarse de otra forma y no se ha verificado.
+- **Navegadores:** probada con un DualSense en Chrome, Brave y Firefox de escritorio. Edge usa el mismo motor que Chrome y debería comportarse igual, pero no se ha verificado. En móviles y otros navegadores la Gamepad API puede variar.
+- **Otros mandos:** pensada para el DualSense. Los mandos que el navegador reconoce con el mapeo estándar también muestran sus ejes (una persona probó uno de Nintendo Switch), pero los umbrales se calibraron pensando en el DualSense y no se ha validado la fiabilidad con otros modelos.
 - **El historial es de cada navegador.** Borrar los datos del sitio lo elimina. Para conservarlo, usa *Exportar CSV*.
 
 ## Origen del proyecto
