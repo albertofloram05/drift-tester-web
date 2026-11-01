@@ -62,7 +62,7 @@ Para una prueba estática fiable: deja el mando sobre una superficie plana, suel
 ## Privacidad
 
 - Los datos de las pruebas **no se envían a ningún servidor**. Se procesan en tu navegador y el historial se guarda solo en él.
-- La página carga tipografías desde **Google Fonts**, por lo que tu navegador hace esa petición al abrirla.
+- La página **no carga recursos de terceros** (las tipografías se sirven desde el propio proyecto). El hosting es GitHub Pages, que, como cualquier servidor, recibe las visitas.
 
 ## Ejecutarla en local
 
