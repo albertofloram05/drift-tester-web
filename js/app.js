@@ -129,8 +129,8 @@ function frame(now) {
 
     const scaleL = drawGraph($('graphL'), tester.left, threshold);
     const scaleR = drawGraph($('graphR'), tester.right, threshold);
-    $('scaleL').textContent = `(escala 0 – ${scaleL.toFixed(2)})`;
-    $('scaleR').textContent = `(escala 0 – ${scaleR.toFixed(2)})`;
+    $('scaleL').textContent = `(escala 0 – ${scaleL.toFixed(2)}${tester.left.maxRadius > scaleL ? ', recortada' : ''})`;
+    $('scaleR').textContent = `(escala 0 – ${scaleR.toFixed(2)}${tester.right.maxRadius > scaleR ? ', recortada' : ''})`;
 
     $('statsL').textContent = formatStats(cur.l, tester.left, threshold);
     $('statsR').textContent = formatStats(cur.r, tester.right, threshold);

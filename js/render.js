@@ -146,7 +146,7 @@ export function drawGraph(canvas, stats, threshold) {
   clearCanvas(ctx, canvas, dpr);
 
   // Escala vertical: se adapta, pero nunca baja de 0.10
-  const scaleMax = Math.max(0.10, threshold * 1.5, stats.maxRadius * 1.2);
+  const scaleMax = Math.min(0.30, Math.max(0.10, threshold * 1.5, stats.maxRadius * 1.2));
 
   // Línea del umbral (discontinua, naranja)
   const PAD = 1;   // margen en píxeles CSS, para que el trazo no se corte en el borde
