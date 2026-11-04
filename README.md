@@ -33,7 +33,7 @@ Con los sticks sueltos, graba posiciones durante 10, 30, 60 o 120 segundos (tras
 - Porcentaje de muestras por encima de un **umbral configurable**.
 - Número de fluctuaciones y porcentaje de lecturas válidas.
 
-Con eso emite un veredicto orientativo por stick: **Normal**, **Posible drift** o **Drift significativo**. La decisión combina sesgo, persistencia y dispersión, de modo que un pico puntual no basta para marcar un stick como defectuoso. Incluye una gráfica de la desviación a lo largo de la prueba, con el umbral dibujado encima.
+Con eso emite un veredicto orientativo por stick: **Normal**, **Posible drift** o **Drift significativo**. La decisión combina sesgo, persistencia y dispersión, de modo que un pico puntual no basta para marcar un stick como defectuoso. Un stick inestable (desviación estándar mayor que 0,02) también se marca como posible drift, aunque su centro parezca correcto.
 
 ### Modo movimiento
 
@@ -80,6 +80,9 @@ Después abre http://localhost:8000. En Windows, si `python3` no existe, usa `py
 
 ```
 drift-tester-web/
+├── docs/
+│   └── calibracion.md
+└── tests/
 ├── index.html
 ├── css/
 │   └── styles.css
@@ -98,7 +101,7 @@ La lógica (`stickStats`, `evaluator`, `driftTester`, `motionAnalyzer`) no depen
 
 ## Limitaciones
 
-- **Los umbrales son valores iniciales**, no estándares. Los del modo estático (umbral del sesgo, 50 % y 80 % de persistencia) y los del modo movimiento (saltos, extremo, vuelta al centro) se eligieron como punto de partida y conviene calibrarlos con un mando que se sepa sano.
+- **Umbrales:** comprobados de forma orientativa con cinco mandos (dos con síntomas) en una sola sesión; el detalle está en [docs/calibracion.md](docs/calibracion.md). Siguen sin ser un estándar y conviene repetir la prueba varias veces.
 - **Los porcentajes son aproximaciones** de los valores que reporta el mando, no medidas físicas del recorrido.
 - **La Gamepad API no garantiza una frecuencia de muestreo fija.** Las muestras se recogen en cada fotograma, así que dependen de la frecuencia de tu pantalla.
 - **El eje horizontal de la gráfica estática reparte muestras, no segundos.** La gráfica del modo movimiento sí usa tiempo real.
