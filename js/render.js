@@ -1,3 +1,10 @@
+/** Borra el canvas entero (en píxeles reales) y deja la escala lista para dibujar en píxeles CSS. */
+function clearCanvas(ctx, canvas, dpr) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);               // sin escala: píxeles reales del canvas
+  ctx.clearRect(0, 0, canvas.width, canvas.height);  // borra TODO el buffer, hasta la última fila
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);            // ahora sí, dibujar en píxeles CSS
+}
+
 export const TRAIL_MS = 500;   // cuánto tiempo recordamos el recorrido
 import { MotionAnalyzer } from './motionAnalyzer.js';
 
@@ -15,8 +22,7 @@ export function drawStick(canvas, x, y, stats, trail, now, sectors = null) {
   }
 
   const ctx = canvas.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, size, size);
+  clearCanvas(ctx, canvas, dpr);
 
   const c = size / 2;
   const r = size * 0.4;
@@ -137,14 +143,15 @@ export function drawGraph(canvas, stats, threshold) {
   }
 
   const ctx = canvas.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);   // a partir de aquí se dibuja en píxeles CSS
-  ctx.clearRect(0, 0, w, h);
+  clearCanvas(ctx, canvas, dpr);
 
   // Escala vertical: se adapta, pero nunca baja de 0.10
   const scaleMax = Math.max(0.10, threshold * 1.5, stats.maxRadius * 1.2);
 
   // Línea del umbral (discontinua, naranja)
-  const ty = h - Math.min(threshold / scaleMax, 1) * h;
+  const PAD = 1;   // margen en píxeles CSS, para que el trazo no se corte en el borde
+  const yOf = v => h - PAD - Math.min(v / scaleMax, 1) * (h - 2 * PAD);
+  const ty = yOf(threshold);
   ctx.strokeStyle = '#f59e0b';
   ctx.lineWidth = 1;
   ctx.setLineDash([5, 4]);
@@ -172,7 +179,7 @@ export function drawGraph(canvas, stats, threshold) {
     const avg = sum / (to - from);
 
     const px = c * w / (columns - 1);
-    const py = h - Math.min(avg / scaleMax, 1) * h;
+    const py = yOf(avg);
     if (c === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
   }
   ctx.stroke();
@@ -210,8 +217,7 @@ export function drawMotionGraph(canvas, recent, now) {
   }
 
   const ctx = canvas.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, w, h);
+  clearCanvas(ctx, canvas, dpr);
 
   const mid = h / 2;
   const yOf = v => mid - v * mid * 0.94;     // 0,94 deja un margen para el grosor de la línea
