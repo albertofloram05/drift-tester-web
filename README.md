@@ -65,7 +65,7 @@ Cada prueba estática se guarda en el navegador (`localStorage`) y puede exporta
 ## Cómo usarla
 
 1. Conecta el mando por **USB** (con un cable que transmita datos) o por **Bluetooth**.
-2. Abre la página en **Chrome o Edge** de escritorio.
+2. Abre la página en **Chrome, Brave, Edge o Firefox** de escritorio.
 3. **Pulsa cualquier botón del mando.** El navegador no expone el mando hasta que lo tocas.
 4. Elige el modo y sigue las indicaciones en pantalla.
 
@@ -92,21 +92,26 @@ Después abre http://localhost:8000. En Windows, si `python3` no existe, usa `py
 
 ```
 drift-tester-web/
-├── docs/
-│   └── calibracion.md
-└── tests/
 ├── index.html
 ├── css/
 │   └── styles.css
-└── js/
-    ├── app.js             # conecta todo: bucle, eventos y modos
-    ├── gamepadReader.js   # lee el mando (Gamepad API)
-    ├── stickStats.js      # estadísticas de un stick
-    ├── evaluator.js       # veredicto del modo estático
-    ├── driftTester.js     # máquina de estados de la prueba
-    ├── motionAnalyzer.js  # análisis y observaciones del modo movimiento
-    ├── history.js         # historial (localStorage) y exportación CSV
-    └── render.js          # dibujo en canvas y formato de textos
+├── js/
+│   ├── app.js                # conecta todo: bucle, eventos y modos
+│   ├── gamepadReader.js      # lee el mando (Gamepad API)
+│   ├── stickStats.js         # estadísticas de un stick
+│   ├── evaluator.js          # veredicto del modo estático
+│   ├── driftTester.js        # máquina de estados de la prueba
+│   ├── motionAnalyzer.js     # análisis y observaciones del modo movimiento
+│   ├── calibration.js        # centro, rango, zona muerta y observaciones de la calibración
+│   ├── calibrationWizard.js  # máquina de estados del asistente de calibración
+│   ├── history.js            # historial (localStorage) y exportación CSV
+│   ├── level.js              # niveles del veredicto
+│   └── render.js             # dibujo en canvas y formato de textos
+├── fonts/                    # tipografías, servidas desde el propio sitio
+└── docs/
+    ├── calibracion.md
+    ├── modo-estatico.png
+    └── modo-movimiento.png
 ```
 
 La lógica (`stickStats`, `evaluator`, `driftTester`, `motionAnalyzer`, `calibration`, `calibrationWizard`) no depende del navegador ni de la página, así que se puede probar por separado desde la consola.
