@@ -35,3 +35,20 @@ Se añadió un límite de desviación estándar de 0,02 como regla de inestabili
 ## Limitaciones
 
 Cinco mandos y una sola sesión: es una comprobación orientativa, no un estudio. «Sin síntomas» es una impresión subjetiva, no prueba que el mando esté sano.
+
+## Modo calibración: valores iniciales
+
+El modo calibración (v1.2.0) usa valores que **no se han calibrado** con las medidas de arriba ni con otra muestra de mandos. Son puntos de partida:
+
+| Valor | Para qué sirve | Valor inicial |
+|---|---|---|
+| Margen de ruido | La zona muerta sugerida cubre el sesgo del centro más este múltiplo del ruido | 2,5 × desviación estándar |
+| Zona muerta mínima | Nunca se sugiere menos | 0,05 |
+| Zona muerta «normal» y «alta» | Hasta 0,10 se muestra como normal; hasta 0,25, como alta; por encima, como aviso | 0,10 y 0,25 |
+| Ruido de aviso | Mismo criterio que el modo estático (desviación estándar) | 0,02 |
+| Alcance mínimo para juzgar el recorrido | Por debajo, la circularidad no se considera fiable | 0,9 |
+| Circularidad «correcta» e «irregular» | Desde 0,90, correcta; entre 0,80 y 0,90, irregular; por debajo de 0,80, aplastada | 0,90 y 0,80 |
+
+Como comprobación previa, se aplicaron estas reglas a la tabla de arriba (mediana del sesgo y desviación máxima de cada stick). Es una estimación hecha con datos del modo estático, no una medición con el modo calibración. Con ella, A, B y D saldrían normales, C derecho y E izquierdo recibirían avisos, y E derecho saldría normal.
+
+**Pendiente:** repetir las mediciones con el modo calibración y revisar estos valores. En especial el límite de 0,10, que no coincide con el umbral de sesgo de 0,05 del modo estático: un stick con sesgo de 0,06, como E derecho, puede salir como «posible drift» en el modo estático y como «normal» en el de calibración.

@@ -22,7 +22,7 @@ Anillo de 8 sectores que se ilumina al llegar al borde en cada dirección, gráf
 
 ## Qué hace
 
-Lee los ejes del mando en tiempo real mediante la **Gamepad API** del navegador y ofrece dos modos.
+Lee los ejes del mando en tiempo real mediante la **Gamepad API** del navegador y ofrece tres modos.
 
 ### Modo estático (prueba de drift)
 
@@ -45,6 +45,18 @@ Para comprobar el funcionamiento general de cada stick:
 - Medición de si el stick **vuelve al centro** tras soltarlo.
 
 Los resultados se presentan como observaciones («posible anomalía a revisar»), nunca como un defecto confirmado.
+
+### Modo calibración
+
+Mide el centro real y el recorrido de cada stick y sugiere una **zona muerta** de partida:
+
+1. **Centro:** con los sticks sueltos (tras una cuenta atrás de 3 s), mide durante 5 s dónde está el centro de cada stick y cuánto tiembla. Si mueves un stick durante la medición, empieza de nuevo.
+2. **Rango:** gira los dos sticks por todo el borde. Un anillo de **16 sectores** se ilumina al llegar al tope en cada dirección.
+3. **Resultado:** para cada stick, el centro, el ruido, el alcance máximo, la circularidad del recorrido y una zona muerta sugerida, con observaciones en tres niveles (correcto, informativo y aviso).
+
+La zona muerta sugerida cubre el sesgo del centro más 2,5 veces el ruido, con un mínimo de 0,05. Se ofrece también en porcentaje y en la versión «recentrando», para los programas que permiten además corregir el centro.
+
+> **Es una calibración por software:** la página solo lee el mando. No puede cambiar su configuración interna ni arreglar el drift; solo mide y sugiere un valor de partida para los juegos o programas que permitan ajustar la zona muerta.
 
 ### Historial
 
@@ -97,11 +109,12 @@ drift-tester-web/
     └── render.js          # dibujo en canvas y formato de textos
 ```
 
-La lógica (`stickStats`, `evaluator`, `driftTester`, `motionAnalyzer`) no depende del navegador ni de la página, así que se puede probar por separado desde la consola.
+La lógica (`stickStats`, `evaluator`, `driftTester`, `motionAnalyzer`, `calibration`, `calibrationWizard`) no depende del navegador ni de la página, así que se puede probar por separado desde la consola.
 
 ## Limitaciones
 
 - **Umbrales:** comprobados de forma orientativa con cinco mandos (dos con síntomas) en una sola sesión; el detalle está en [docs/calibracion.md](docs/calibracion.md). Siguen sin ser un estándar y conviene repetir la prueba varias veces.
+- **Modo calibración:** la zona muerta sugerida (sesgo + 2,5 × ruido, mínimo 0,05), los límites de zona muerta «normal» y «alta» (0,10 y 0,25) y los de circularidad (0,90 y 0,80) son valores iniciales que no se han calibrado con una muestra de mandos. Tómalos como punto de partida; el detalle está en [docs/calibracion.md](docs/calibracion.md).
 - **Los porcentajes son aproximaciones** de los valores que reporta el mando, no medidas físicas del recorrido.
 - **La Gamepad API no garantiza una frecuencia de muestreo fija.** Las muestras se recogen en cada fotograma, así que dependen de la frecuencia de tu pantalla.
 - **El eje horizontal de la gráfica estática reparte muestras, no segundos.** La gráfica del modo movimiento sí usa tiempo real.
