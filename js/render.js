@@ -203,6 +203,25 @@ export function formatMotion(m) {
   return lines.join('\n');
 }
 
+/** Texto de resultados del modo calibración para un stick ({ center, range, deadzone }). */
+export function formatCalibration(side) {
+  if (!side || !side.center) return 'Sin resultados todavía';
+
+  const { center: c, range: r, deadzone: d } = side;
+  const pct = v => `${Math.round(v * 100)} %`;
+  const circ = r.circularity === null ? '—' : r.circularity.toFixed(3);
+
+  return [
+    `Centro:       X ${sgn(c.x)}  Y ${sgn(c.y)}`,
+    `Sesgo:        ${c.offset.toFixed(3)} (${(c.offset * 100).toFixed(1)} %)`,
+    `Ruido:        ${c.noise.toFixed(3)}`,
+    `Alcance máx:  ${r.maxReach.toFixed(3)}`,
+    `Circularidad: ${circ}`,
+    `Zona muerta:  ${d.deadzone.toFixed(2)} (${pct(d.deadzone)})`,
+    `Recentrando:  ${d.recentered.toFixed(2)} (${pct(d.recentered)})`,
+  ].join('\n');
+}
+
 /** Gráfica de X e Y de los últimos segundos. Valores de -1 a 1; positivo arriba. */
 export function drawMotionGraph(canvas, recent, now) {
   const dpr = window.devicePixelRatio || 1;

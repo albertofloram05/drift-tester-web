@@ -3,9 +3,9 @@ import { DriftTester, State } from './driftTester.js';
 import { evaluate } from './evaluator.js';
 import { MotionAnalyzer, observe } from './motionAnalyzer.js';
 import { CalibrationWizard, CalState } from './calibrationWizard.js';
-import { RangeTracker } from './calibration.js';
+import { RangeTracker, observeCalibration } from './calibration.js';
 import { drawStick, formatStats, formatMotion, setVerdict, drawGraph,
-         drawMotionGraph, setObservations, TRAIL_MS } from './render.js';
+         drawMotionGraph, setObservations, formatCalibration, TRAIL_MS } from './render.js';
 import { buildResult, save, count, clear, loadAll, downloadCsv } from './history.js';
 
 const reader = new GamepadReader();
@@ -173,8 +173,15 @@ function frame(now) {
     drawStick($('canvasL'), cur.l.x, cur.l.y, wizard.left, trailL, now, wizard.rangeLeft.sectorReach);
     drawStick($('canvasR'), cur.r.x, cur.r.y, wizard.right, trailR, now, wizard.rangeRight.sectorReach);
     updateCalibrationUi(now, connected);
+
+    const result = wizard.result;    // null hasta que el asistente termina
+    $('calL').textContent = formatCalibration(result?.left);
+    $('calR').textContent = formatCalibration(result?.right);
+    setObservations($('calObsL'), result ? observeCalibration(result.left) : []);
+    setObservations($('calObsR'), result ? observeCalibration(result.right) : []);
   }
 }
+
 
 /** Añade una posición a la estela y descarta las más antiguas. */
 function pushTrail(trail, x, y, now) {
@@ -242,7 +249,8 @@ function updateCalibrationUi(now, connected) {
       step = 0;
       break;
     case CalState.CENTER:
-      text = 'Midiendo el centro: no toques los sticks.';
+      text = 'Midiendo el centro: no toques los sticks.' +
+             (wizard.restarts > 0 ? ` Se movió un stick y la medición ha vuelto a empezar (${wizard.restarts}).` : '');
       progress = wizard.centerProgress(now) * 0.5;
       step = 0;
       break;
@@ -253,7 +261,7 @@ function updateCalibrationUi(now, connected) {
       step = 1;
       break;
     case CalState.DONE:
-      text = 'Calibración terminada.';
+      text = 'Calibración terminada. Revisa los resultados de cada stick.';
       progress = 1;
       step = 2;
       break;
