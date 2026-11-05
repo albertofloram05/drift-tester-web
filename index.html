@@ -27,6 +27,7 @@
     <div class="mode-switch" role="group" aria-label="Modo de prueba">
       <button id="modeStatic" class="mode-btn active" type="button">Modo estático</button>
       <button id="modeMotion" class="mode-btn" type="button">Modo movimiento</button>
+      <button id="modeCalibration" class="mode-btn" type="button">Modo calibración</button>
     </div>
   </header>
 
@@ -60,6 +61,8 @@
           <span class="legend"><i class="dot x"></i>X <i class="dot y"></i>Y</span></p>
         <canvas id="motionGraphL" class="graph motion-only" width="340" height="120"></canvas>
         <ul id="obsL" class="observations motion-only"></ul>
+        <pre id="calL" class="calibration-only"></pre>
+        <ul id="calObsL" class="observations calibration-only"></ul>        
       </section>
 
       <section class="card">
@@ -76,6 +79,8 @@
           <span class="legend"><i class="dot x"></i>X <i class="dot y"></i>Y</span></p>
         <canvas id="motionGraphR" class="graph motion-only" width="340" height="120"></canvas>
         <ul id="obsR" class="observations motion-only"></ul>
+        <pre id="calR" class="calibration-only"></pre>
+        <ul id="calObsR" class="observations calibration-only"></ul>        
       </section>
     </div>
 
@@ -84,6 +89,32 @@
       <p>Mueve cada stick en todas las direcciones, hasta el borde, y suéltalo.
          Los sectores se iluminan según hasta dónde llegues.</p>
       <button id="motionResetBtn" class="btn">Reiniciar modo movimiento</button>
+    </section>
+
+    <!-- Solo modo calibración -->
+    <section class="card panel calibration-only">
+      <ol id="calSteps" class="cal-steps">
+        <li data-step="center">Centro</li>
+        <li data-step="range">Rango</li>
+        <li data-step="result">Resultado</li>
+      </ol>
+      <p id="calStatus">Conecta un mando</p>
+
+      <div class="cal-progress" role="progressbar" aria-label="Progreso de la calibración"
+           aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div id="calBar" class="cal-bar"></div>
+      </div>
+
+      <div class="row">
+        <button id="calStartBtn" class="btn primary">Iniciar calibración</button>
+        <button id="calResetBtn" class="btn">Reiniciar</button>
+      </div>
+      <p class="hint">
+        La calibración se hace por software: esta página solo lee el mando, no puede
+        cambiar su configuración interna ni arreglar el drift. Mide el centro y el recorrido
+        de cada stick y sugiere una zona muerta como punto de partida para los juegos o
+        programas que la permitan.
+      </p>
     </section>
 
     <!-- Solo modo estático -->

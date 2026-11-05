@@ -390,6 +390,64 @@ select:disabled { opacity: 0.5; cursor: not-allowed; }
 [data-mode="motion"] .motion-only { display: block; }
 [data-mode="motion"] pre.motion-only { display: inline-block; }
 
+
+/* Modo calibración: oculta lo del estático y muestra lo suyo */
+.calibration-only { display: none; }
+
+[data-mode="calibration"] .static-only { display: none !important; }
+[data-mode="calibration"] .calibration-only { display: block; }
+[data-mode="calibration"] pre.calibration-only { display: inline-block; }
+
+/* ---------- Modo calibración: pasos y barra de progreso ---------- */
+.cal-steps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+  counter-reset: paso;
+}
+
+.cal-steps li {
+  counter-increment: paso;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.cal-steps li::before { content: counter(paso) ". "; }
+
+.cal-steps li.active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
+
+.cal-steps li.done {
+  color: var(--green);
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.cal-progress {
+  height: 8px;
+  margin: 0 0 14px;
+  overflow: hidden;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.cal-bar {
+  width: 0;
+  height: 100%;
+  background: var(--blue);
+  transition: width 0.15s linear;
+}
+
 .panel p { margin: 0 0 12px; }
 
 /* ---------- Modo movimiento: leyenda y observaciones ---------- */
@@ -499,4 +557,6 @@ select:disabled { opacity: 0.5; cursor: not-allowed; }
   main { padding: 10px; }
   .card { padding: 14px; }
   .btn { flex: 1 1 100%; }      /* botones a todo el ancho en móvil */
+  .mode-switch { max-width: 100%; }                      /* tres modos: que no se salga de la pantalla */
+  .mode-btn { padding: 8px 10px; font-size: 0.9rem; }
 }
