@@ -109,3 +109,71 @@ export function suggestDeadzone(center) {
 
   return { deadzone, recentered, level };
 }
+
+
+// ---------- Observaciones ----------
+
+// Valores iniciales míos, no estándares: se ajustan probando.
+const NOISE_WARN = 0.02;     // mismo criterio que SPREAD_LIMIT de evaluator.js
+const EDGE_REACH = 0.9;      // mismo valor que EXTREME del modo movimiento
+const CIRC_OK = 0.90;        // por encima: recorrido circular
+const CIRC_WARN = 0.80;      // por debajo: recorrido claramente aplastado
+
+/**
+ * Convierte el resultado de UN stick ({ center, range, deadzone }) en una lista
+ * de observaciones { level, text }, igual que observe() en el modo movimiento.
+ */
+export function observeCalibration(side) {
+  const list = [];
+  if (!side || !side.center) return list;
+  const { center, range, deadzone } = side;
+
+  // 1) Zona muerta sugerida
+  const dz = deadzone.deadzone.toFixed(2);
+  if (deadzone.level === 'ok') {
+    list.push({ level: 'ok',
+      text: `Zona muerta sugerida: ${dz}. Úsala como punto de partida si tu juego o programa permite ajustarla.` });
+  } else if (deadzone.level === 'info') {
+    list.push({ level: 'info',
+      text: `Zona muerta sugerida: ${dz} (el centro está a ${center.offset.toFixed(3)} del ideal). ` +
+            `Si el programa permite además corregir el centro, bastaría con ${deadzone.recentered.toFixed(2)}.` });
+  } else {
+    list.push({ level: 'warn',
+      text: `Zona muerta sugerida: ${dz}. Es muy alta: con ese valor la zona muerta taparía el problema ` +
+            'en vez de arreglarlo. Conviene revisar el mando; compáralo con el modo estático y repite la prueba.' });
+  }
+
+  // 2) Estabilidad en reposo
+  if (center.noise > NOISE_WARN) {
+    list.push({ level: 'warn',
+      text: `El stick no se queda quieto en reposo (ruido ${center.noise.toFixed(3)}). ` +
+            'El modo estático lo marcaría como posible drift; repite la prueba con el mando apoyado ' +
+            'y, si se mantiene, conviene revisarlo.' });
+  } else {
+    list.push({ level: 'ok', text: `Reposo estable (ruido ${center.noise.toFixed(3)}).` });
+  }
+
+  // 3) Rango y circularidad
+  if (!range.complete) {
+    list.push({ level: 'info',
+      text: `Faltan zonas por recorrer: ${range.explored} de ${range.total}. Gira el stick por todo el borde.` });
+  } else if (range.maxReach < EDGE_REACH) {
+    list.push({ level: 'info',
+      text: `No llegaste al borde (alcance máximo ${range.maxReach.toFixed(2)}), así que la circularidad ` +
+            'no es fiable. Repite empujando el stick hasta el tope.' });
+  } else if (range.circularity >= CIRC_OK) {
+    list.push({ level: 'ok',
+      text: `Recorrido circular (circularidad ${range.circularity.toFixed(2)}).` });
+  } else if (range.circularity >= CIRC_WARN) {
+    list.push({ level: 'info',
+      text: `Recorrido algo irregular (circularidad ${range.circularity.toFixed(2)}): en alguna dirección ` +
+            'llega menos lejos que en otras. Repite la prueba empujando hasta el tope.' });
+  } else {
+    list.push({ level: 'warn',
+      text: `Recorrido aplastado (circularidad ${range.circularity.toFixed(2)}): en algunas direcciones el ` +
+            'stick llega mucho menos lejos. Repite la prueba empujando hasta el tope y, si se mantiene, ' +
+            'conviene revisarlo.' });
+  }
+
+  return list;
+}
