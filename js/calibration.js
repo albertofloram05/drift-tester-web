@@ -76,3 +76,36 @@ export function measureRange(range) {
     circularity: minReach / maxReach,  // 1 = círculo perfecto; menos = aplastado
   };
 }
+
+
+// ---------- Zona muerta sugerida ----------
+
+// Valores iniciales míos, no estándares: se ajustan probando.
+const NOISE_FACTOR = 2.5;    // cuántas veces el ruido se cubre (≈99,8 % de las lecturas en reposo)
+const DEADZONE_MIN = 0.05;   // no se sugiere menos, ni siquiera con un stick perfecto
+const DEADZONE_OK = 0.10;    // hasta aquí: normal
+const DEADZONE_HIGH = 0.25;  // hasta aquí: alta; por encima, la zona muerta taparía un problema
+
+// Redondea hacia arriba a 2 decimales (el -1e-9 evita que 0.07 pase a 0.08 por decimales raros).
+const roundUp = v => Math.ceil(v * 100 - 1e-9) / 100;
+
+/**
+ * Sugiere una zona muerta a partir de la medición del centro (measureCenter).
+ * Devuelve null si no hay medición.
+ *   deadzone   -> radio que cubre el centro real y su ruido, sin tocar nada más
+ *   recentered -> radio si el juego o programa permite además corregir el centro
+ *   level      -> 'ok' | 'info' | 'warn', igual que las observaciones del modo movimiento
+ */
+export function suggestDeadzone(center) {
+  if (!center) return null;
+
+  const spread = NOISE_FACTOR * center.noise;
+  const deadzone = Math.max(DEADZONE_MIN, roundUp(center.offset + spread));
+  const recentered = Math.max(DEADZONE_MIN, roundUp(spread));
+
+  let level = 'ok';
+  if (deadzone > DEADZONE_HIGH) level = 'warn';
+  else if (deadzone > DEADZONE_OK) level = 'info';
+
+  return { deadzone, recentered, level };
+}
