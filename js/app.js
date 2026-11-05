@@ -2,6 +2,8 @@ import { GamepadReader } from './gamepadReader.js';
 import { DriftTester, State } from './driftTester.js';
 import { evaluate } from './evaluator.js';
 import { MotionAnalyzer, observe } from './motionAnalyzer.js';
+import { CalibrationWizard, CalState } from './calibrationWizard.js';
+import { RangeTracker } from './calibration.js';
 import { drawStick, formatStats, formatMotion, setVerdict, drawGraph,
          drawMotionGraph, setObservations, TRAIL_MS } from './render.js';
 import { buildResult, save, count, clear, loadAll, downloadCsv } from './history.js';
@@ -10,8 +12,9 @@ const reader = new GamepadReader();
 const tester = new DriftTester();
 const motionL = new MotionAnalyzer();
 const motionR = new MotionAnalyzer();
+const wizard = new CalibrationWizard();
 
-let mode = 'static';          // 'static' | 'motion'
+let mode = 'static';          // 'static' | 'motion' | 'calibration'
 let threshold = 0.05;
 let savedThisTest = true;     // evita guardar la misma prueba varias veces
 let testPadName = '';         // mando con el que se inició la prueba
@@ -29,6 +32,10 @@ const thresholdEl = $('threshold');
 const historyCountEl = $('historyCount');
 const historyMsgEl = $('historyMsg');
 const helpEl = $('help');
+const calStatusEl = $('calStatus');
+const calStartBtn = $('calStartBtn');
+const calBarEl = $('calBar');
+const calStepEls = document.querySelectorAll('#calSteps li');
 
 // ---- Eventos de los controles ----
 startBtn.addEventListener('click', () => {
@@ -71,18 +78,27 @@ $('clearBtn').addEventListener('click', () => {
 
 $('modeStatic').addEventListener('click', () => setMode('static'));
 $('modeMotion').addEventListener('click', () => setMode('motion'));
+$('modeCalibration').addEventListener('click', () => setMode('calibration'));
 $('motionResetBtn').addEventListener('click', resetMotion);
+
+calStartBtn.addEventListener('click', () => {
+  if (wizard.running) wizard.stop();
+  else wizard.start(performance.now());
+});
+$('calResetBtn').addEventListener('click', () => wizard.reset());
 
 // ---- Modos ----
 function setMode(newMode) {
   if (newMode === mode) return;
-  if (newMode === 'motion' && tester.running) tester.stop();   // no dejar una prueba a medias
+  if (newMode !== 'static' && tester.running) tester.stop();   // no dejar una prueba a medias
 
   mode = newMode;
   document.body.dataset.mode = mode;     // el CSS muestra u oculta según este atributo
   $('modeStatic').classList.toggle('active', mode === 'static');
   $('modeMotion').classList.toggle('active', mode === 'motion');
+  $('modeCalibration').classList.toggle('active', mode === 'calibration');
   resetMotion();
+  wizard.reset();
 }
 
 function resetMotion() {
@@ -100,9 +116,13 @@ function frame(now) {
   // Cada modo procesa la muestra a su manera
   if (mode === 'static') {
     tester.update(now, s);
-  } else if (s) {
-    motionL.update(now, s.lx, s.ly);
-    motionR.update(now, s.rx, s.ry);
+  } else if (mode === 'motion') {
+    if (s) {
+      motionL.update(now, s.lx, s.ly);
+      motionR.update(now, s.rx, s.ry);
+    }
+  } else {
+    wizard.update(now, s);
   }
 
   updateUi(now, connected);
@@ -136,7 +156,7 @@ function frame(now) {
     $('statsR').textContent = formatStats(cur.r, tester.right, threshold);
     setVerdict($('verdictL'), done ? evaluate(tester.left, threshold) : null);
     setVerdict($('verdictR'), done ? evaluate(tester.right, threshold) : null);
-  } else {
+  } else if (mode === 'motion') {
     drawStick($('canvasL'), cur.l.x, cur.l.y, null, trailL, now, motionL.sectorReach);
     drawStick($('canvasR'), cur.r.x, cur.r.y, null, trailR, now, motionR.sectorReach);
 
@@ -148,6 +168,11 @@ function frame(now) {
 
     setObservations($('obsL'), observe(motionL));
     setObservations($('obsR'), observe(motionR));
+  } else {
+    // Calibración: el anillo muestra el recorrido (verde = llegó al borde) y la marca amarilla, el centro medido
+    drawStick($('canvasL'), cur.l.x, cur.l.y, wizard.left, trailL, now, wizard.rangeLeft.sectorReach);
+    drawStick($('canvasR'), cur.r.x, cur.r.y, wizard.right, trailR, now, wizard.rangeRight.sectorReach);
+    updateCalibrationUi(now, connected);
   }
 }
 
@@ -190,6 +215,60 @@ function updateUi(now, connected) {
       statusEl.textContent = `Prueba terminada. Muestras: ${tester.left.count}`;
       break;
   }
+}
+
+/** Actualiza el panel del modo calibración: texto, pasos, barra y botón. */
+function updateCalibrationUi(now, connected) {
+  const running = wizard.running;
+  calStartBtn.textContent = running ? 'Detener' : 'Iniciar calibración';
+  calStartBtn.disabled = !connected && !running;
+
+  const total = RangeTracker.SECTORS;
+  const left = wizard.rangeLeft.explored;
+  const right = wizard.rangeRight.explored;
+
+  let text = '';
+  let progress = 0;    // de 0 a 1 sobre las dos fases: el centro vale la mitad y el rango la otra mitad
+  let step = -1;       // paso resaltado: 0 centro, 1 rango, 2 resultado; -1 ninguno
+
+  switch (wizard.state) {
+    case CalState.IDLE:
+      text = wizard.error === 'no-data'
+        ? 'No llegaron lecturas del mando. Comprueba la conexión y vuelve a intentarlo.'
+        : connected ? 'Listo. Pulsa «Iniciar calibración».' : 'Conecta un mando';
+      break;
+    case CalState.COUNTDOWN:
+      text = `Suelta los dos sticks... ${wizard.countdownRemainingSec(now)}`;
+      step = 0;
+      break;
+    case CalState.CENTER:
+      text = 'Midiendo el centro: no toques los sticks.';
+      progress = wizard.centerProgress(now) * 0.5;
+      step = 0;
+      break;
+    case CalState.RANGE:
+      text = 'Gira los dos sticks por todo el borde, hasta el tope. ' +
+             `Zonas recorridas: izquierdo ${left}/${total}, derecho ${right}/${total}`;
+      progress = 0.5 + 0.5 * (left + right) / (2 * total);
+      step = 1;
+      break;
+    case CalState.DONE:
+      text = 'Calibración terminada.';
+      progress = 1;
+      step = 2;
+      break;
+  }
+
+  calStatusEl.textContent = text;
+
+  const pct = Math.round(progress * 100);
+  calBarEl.style.width = `${pct}%`;
+  calBarEl.parentElement.setAttribute('aria-valuenow', pct);
+
+  calStepEls.forEach((li, i) => {
+    li.classList.toggle('done', i < step);
+    li.classList.toggle('active', i === step);
+  });
 }
 
 // ---- Historial ----
