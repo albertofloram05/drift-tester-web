@@ -19,6 +19,7 @@ export class CalibrationWizard {
   #state = CalState.IDLE;
   #phaseStart = 0;      // instante en que empezó la fase actual
   #restarts = 0;        // veces que se reinició la fase del centro por mover un stick
+  #wasPushing = false;  // ¿el fotograma anterior ya estaba empujando? (para contar empujones, no fotogramas)  
   #error = null;        // null | 'no-data'
 
   left = new StickStats();            // centro del stick izquierdo
@@ -58,6 +59,7 @@ export class CalibrationWizard {
     this.rangeLeft.reset();
     this.rangeRight.reset();
     this.#restarts = 0;
+    this.#wasPushing = false;    
     this.#error = null;
   }
 
@@ -81,9 +83,11 @@ export class CalibrationWizard {
             this.left.reset();
             this.right.reset();
             this.#phaseStart = nowMs;
-            this.#restarts++;
+            if (!this.#wasPushing) this.#restarts++;   // cuenta cada empujón, no cada fotograma
+            this.#wasPushing = true;
             break;
           }
+          this.#wasPushing = false;
           this.left.add(s.lx, s.ly);
           this.right.add(s.rx, s.ry);
         } else {
@@ -91,7 +95,7 @@ export class CalibrationWizard {
           this.right.addFailed();
         }
         if (elapsed >= CENTER_MS) this.#finishCenter(nowMs);
-        break;
+        break;      
 
       case CalState.RANGE:
         if (s) {
