@@ -20,6 +20,12 @@ Prueba de drift con los sticks sueltos: estadísticas de cada stick, gráfica de
 
 Anillo de 8 sectores que se ilumina al llegar al borde en cada dirección, gráfica de X e Y de los últimos 10 segundos y observaciones sobre picos y vuelta al centro.
 
+### Modo calibración
+
+![Modo calibración con los sectores iluminados](docs/modo-calibracion.png)
+
+Anillo de 16 sectores que mide el centro real y el recorrido de cada stick y sugiere una zona muerta de partida.
+
 ## Qué hace
 
 Lee los ejes del mando en tiempo real mediante la **Gamepad API** del navegador y ofrece tres modos.
