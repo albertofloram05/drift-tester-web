@@ -26,9 +26,15 @@ Anillo de 8 sectores que se ilumina al llegar al borde en cada dirección, gráf
 
 Anillo de 16 sectores que mide el centro real y el recorrido de cada stick y sugiere una zona muerta de partida.
 
+### Modo botones
+
+![Modo botones con el mando dibujado iluminado](docs/modo-botones.png)
+
+Mando dibujado que se ilumina al pulsar cada botón, con el registro de las pulsaciones.
+
 ## Qué hace
 
-Lee los ejes del mando en tiempo real mediante la **Gamepad API** del navegador y ofrece tres modos.
+Lee los ejes del mando en tiempo real mediante la **Gamepad API** del navegador y ofrece cuatro modos.
 
 ### Modo estático (prueba de drift)
 
@@ -63,6 +69,18 @@ Mide el centro real y el recorrido de cada stick y sugiere una **zona muerta** d
 La zona muerta sugerida cubre el sesgo del centro más 2,5 veces el ruido, con un mínimo de 0,05. Se ofrece también en porcentaje y en la versión «recentrando», para los programas que permiten además corregir el centro.
 
 > **Es una calibración por software:** la página solo lee el mando. No puede cambiar su configuración interna ni arreglar el drift; solo mide y sugiere un valor de partida para los juegos o programas que permitan ajustar la zona muerta.
+
+### Modo botones
+
+Dibuja un mando que se ilumina al pulsar cada botón y registra las pulsaciones:
+
+- **Mando dibujado:** los 17 botones del mapeo estándar (cruceta, botones de acción, L1/R1, L2/R2, L3/R3, Create, Options y PS) se iluminan al pulsarlos. Las tapas de los sticks se mueven con los ejes.
+- **Gatillos analógicos:** L2 y R2 se rellenan según cuánto los aprietas, no solo cuando cuentan como pulsados.
+- **Registro:** cada pulsación y cada suelta, con su hora desde que empezó el registro y cuánto tiempo estuvo pulsado el botón. La lista muestra los últimos 100 sucesos, el más reciente arriba.
+- **Contadores** por botón y total de pulsaciones.
+- **Diagnóstico:** un desplegable muestra cuántos botones envía el navegador y el índice de los que están pulsados.
+
+> **Solo es fiable con el mapeo estándar.** Si el navegador no lo usa, la página lo avisa. **El panel táctil puede no registrarse:** es un botón extra que algunos sistemas no exponen. En Ubuntu, con Chrome, Edge, Brave y Firefox, el navegador envía 17 botones y el panel táctil no está entre ellos (el sistema lo usa como touchpad y mueve el cursor). Si no llega, se atenúa en el dibujo y la página lo indica. El botón PS también puede ser capturado por el sistema antes de llegar a la página.
 
 ### Historial
 
@@ -110,6 +128,7 @@ drift-tester-web/
 │   ├── motionAnalyzer.js     # análisis y observaciones del modo movimiento
 │   ├── calibration.js        # centro, rango, zona muerta y observaciones de la calibración
 │   ├── calibrationWizard.js  # máquina de estados del asistente de calibración
+│   ├── buttonTracker.js      # tabla de botones y registro de pulsaciones
 │   ├── history.js            # historial (localStorage) y exportación CSV
 │   ├── level.js              # niveles del veredicto
 │   └── render.js             # dibujo en canvas y formato de textos
@@ -117,10 +136,12 @@ drift-tester-web/
 └── docs/
     ├── calibracion.md
     ├── modo-estatico.png
-    └── modo-movimiento.png
+    ├── modo-movimiento.png
+    ├── modo-calibracion.png
+    └── modo-botones.png
 ```
 
-La lógica (`stickStats`, `evaluator`, `driftTester`, `motionAnalyzer`, `calibration`, `calibrationWizard`) no depende del navegador ni de la página, así que se puede probar por separado desde la consola.
+La lógica (`stickStats`, `evaluator`, `driftTester`, `motionAnalyzer`, `calibration`, `calibrationWizard`, `buttonTracker`) no depende del navegador ni de la página, así que se puede probar por separado desde la consola.
 
 ## Limitaciones
 
