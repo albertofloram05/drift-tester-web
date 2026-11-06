@@ -49,4 +49,11 @@ export class GamepadReader {
       rx: pad.axes[2], ry: pad.axes[3],
     };
   }
+
+    /** Lee los botones: un array de { pressed, value }. Devuelve null si no hay mando. */
+  readButtons() {
+    const pad = this.#pad();
+    if (!pad || !pad.connected) return null;
+    return pad.buttons.map(b => ({ pressed: b.pressed, value: b.value }));
+  }
 }
