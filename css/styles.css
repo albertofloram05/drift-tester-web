@@ -383,6 +383,17 @@ select:disabled { opacity: 0.5; cursor: not-allowed; }
   color: #fff;
 }
 
+/* Cuatro modos: en pantallas estrechas se pasan a una rejilla de 2 × 2 */
+@media (max-width: 700px) {
+  .mode-switch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    max-width: 420px;
+    border-radius: 22px;
+  }
+}
+
 /* ---------- Visibilidad según el modo ---------- */
 .motion-only { display: none; }
 
@@ -447,6 +458,138 @@ select:disabled { opacity: 0.5; cursor: not-allowed; }
   background: var(--blue);
   transition: width 0.15s linear;
 }
+
+/* Modo botones: oculta lo del estático y los sticks, y muestra lo suyo */
+.buttons-only { display: none; }
+
+[data-mode="buttons"] .static-only { display: none !important; }
+[data-mode="buttons"] #sticks { display: none; }
+[data-mode="buttons"] .buttons-only { display: block; }
+
+/* ---------- Modo botones: el mando dibujado ---------- */
+.pad {
+  display: block;
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+  margin: 0 auto 8px;
+}
+
+.pad .body { fill: #1a2130; stroke: var(--border); stroke-width: 2; }
+.pad .pad-fill { fill: #10151e; }
+.pad .stick-base { fill: #0d1117; stroke: var(--border); stroke-width: 2; }
+
+.pad .key {
+  fill: #232b3b;
+  stroke: #3a4458;
+  stroke-width: 2;
+  transition: fill 0.06s, stroke 0.06s;
+}
+
+.pad .key.pressed {
+  fill: var(--c, var(--blue));
+  stroke: #fff;
+}
+
+/* Los gatillos no se rellenan al pulsarse: así se sigue viendo cuánto se aprietan */
+.pad .key.trig.pressed {
+  fill: #232b3b;
+  stroke: #fff;
+}
+
+.pad .key.missing { opacity: 0.3; }
+
+.pad .glyph {
+  fill: none;
+  stroke: var(--c);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.pad .key.pressed ~ .glyph { stroke: #0b0e13; }
+
+.pad .trig-fill {
+  fill: var(--blue);
+  pointer-events: none;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  transform: scaleY(var(--v, 0));
+}
+
+#padStickL, #padStickR { transition: transform 0.04s linear; }
+
+.pad .lbl {
+  fill: #aab3c5;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.pad .lbl.small { font-size: 10px; letter-spacing: 0.04em; }
+
+/* La etiqueta de un botón pulsado se ve sobre el color de relleno (cada etiqueta va en el mismo grupo que su botón) */
+.pad .key.pressed ~ .lbl { fill: #fff; }
+
+/* ---------- Modo botones: registro y contadores ---------- */
+.pad-log {
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+  max-height: 240px;
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.pad-log:empty::before {
+  content: "Pulsa botones del mando para ver el registro.";
+  display: block;
+  padding: 12px;
+  color: var(--muted);
+}
+
+.pad-log li {
+  display: flex;
+  gap: 12px;
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.pad-log li:last-child { border-bottom: 0; }
+.pad-log .t { flex: 0 0 5.5em; color: var(--muted); }
+.pad-log .press .what { color: var(--green); }
+.pad-log .release .what { color: var(--muted); }
+
+.pad-counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8rem;
+}
+
+.pad-counts li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.pad-counts li.zero { opacity: 0.45; }
+.pad-counts li.absent { display: none; }
+.pad-counts b { font-family: var(--font-mono); color: var(--text); }
 
 .panel p { margin: 0 0 12px; }
 

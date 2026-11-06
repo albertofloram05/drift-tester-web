@@ -28,6 +28,7 @@
       <button id="modeStatic" class="mode-btn active" type="button">Modo estático</button>
       <button id="modeMotion" class="mode-btn" type="button">Modo movimiento</button>
       <button id="modeCalibration" class="mode-btn" type="button">Modo calibración</button>
+      <button id="modeButtons" class="mode-btn" type="button">Modo botones</button>      
     </div>
   </header>
 
@@ -115,6 +116,93 @@
         de cada stick y sugiere una zona muerta como punto de partida para los juegos o
         programas que la permitan.
       </p>
+    </section>
+
+    <!-- Solo modo botones -->
+    <section class="card panel buttons-only">
+      <svg id="padSvg" class="pad" viewBox="0 0 640 400" role="img"
+           aria-label="Mando DualSense visto desde arriba. Cada botón se ilumina al pulsarlo.">
+        <!-- Gatillos L2 / R2 (se rellenan según cuánto se aprietan) -->
+        <g>
+          <rect class="key trig" data-key="l2" x="122" y="10" width="104" height="42" rx="12"/>
+          <rect class="trig-fill" data-fill="l2" x="122" y="10" width="104" height="42" rx="12"/>
+          <text class="lbl" x="174" y="36">L2</text>
+        </g>
+        <g>
+          <rect class="key trig" data-key="r2" x="414" y="10" width="104" height="42" rx="12"/>
+          <rect class="trig-fill" data-fill="r2" x="414" y="10" width="104" height="42" rx="12"/>
+          <text class="lbl" x="466" y="36">R2</text>
+        </g>
+
+        <!-- Botones de hombro L1 / R1 -->
+        <g>
+          <rect class="key" data-key="l1" x="112" y="58" width="120" height="20" rx="10"/>
+          <text class="lbl" x="172" y="72">L1</text>
+        </g>
+        <g>
+          <rect class="key" data-key="r1" x="408" y="58" width="120" height="20" rx="10"/>
+          <text class="lbl" x="468" y="72">R1</text>
+        </g>
+
+        <!-- Cuerpo del mando -->
+        <path class="body" d="M320,82 C385,82 440,84 482,94 C545,108 578,152 592,232 C603,297 592,352 555,367 C518,380 484,354 468,314 C455,282 440,287 410,289 L230,289 C200,287 185,282 172,314 C156,354 122,380 85,367 C48,352 37,297 48,232 C62,152 95,108 158,94 C200,84 255,82 320,82 Z"/>
+
+        <!-- Panel táctil, Create y Options -->
+        <rect class="key" data-key="touchpad" x="252" y="96" width="136" height="66" rx="16"/>
+        <text class="lbl small" x="320" y="134">Panel táctil</text>
+        <rect class="key" data-key="create" x="222" y="108" width="12" height="28" rx="6"/>
+        <rect class="key" data-key="options" x="406" y="108" width="12" height="28" rx="6"/>
+        <text class="lbl small" x="228" y="152">Create</text>
+        <text class="lbl small" x="412" y="152">Options</text>
+
+        <!-- Cruceta -->
+        <rect class="pad-fill" x="138" y="160" width="24" height="24"/>
+        <rect class="key" data-key="up" x="138" y="136" width="24" height="24" rx="5"/>
+        <rect class="key" data-key="down" x="138" y="184" width="24" height="24" rx="5"/>
+        <rect class="key" data-key="left" x="114" y="160" width="24" height="24" rx="5"/>
+        <rect class="key" data-key="right" x="162" y="160" width="24" height="24" rx="5"/>
+
+        <!-- Botones de acción -->
+        <g class="face" style="--c: #22c55e">
+          <circle class="key" data-key="triangle" cx="490" cy="134" r="17"/>
+          <path class="glyph" d="M490,125 L498,139 L482,139 Z"/>
+        </g>
+        <g class="face" style="--c: #ef4444">
+          <circle class="key" data-key="circle" cx="528" cy="172" r="17"/>
+          <circle class="glyph" cx="528" cy="172" r="8"/>
+        </g>
+        <g class="face" style="--c: #3b82f6">
+          <circle class="key" data-key="cross" cx="490" cy="210" r="17"/>
+          <path class="glyph" d="M483,203 L497,217 M497,203 L483,217"/>
+        </g>
+        <g class="face" style="--c: #e879f9">
+          <circle class="key" data-key="square" cx="452" cy="172" r="17"/>
+          <rect class="glyph" x="445" y="165" width="14" height="14"/>
+        </g>
+
+        <!-- Botón PS -->
+        <g>
+          <circle class="key" data-key="ps" cx="320" cy="236" r="13"/>
+          <text class="lbl small" x="320" y="239.5">PS</text>
+        </g>
+
+        <!-- Sticks (la tapa se mueve con los ejes y se ilumina al pulsarla: L3 / R3) -->
+        <circle class="stick-base" cx="240" cy="238" r="42"/>
+        <g id="padStickL"><circle class="key" data-key="l3" cx="240" cy="238" r="29"/><text class="lbl small" x="240" y="242">L3</text></g>
+        <circle class="stick-base" cx="400" cy="238" r="42"/>
+        <g id="padStickR"><circle class="key" data-key="r3" cx="400" cy="238" r="29"/><text class="lbl small" x="400" y="242">R3</text></g>
+      </svg>
+      <p id="padNote" class="hint"></p>
+    </section>
+
+    <section class="card panel buttons-only">
+      <h2>Registro de pulsaciones</h2>
+      <p id="padSummary">Pulsaciones totales: 0</p>
+      <ol id="padLog" class="pad-log" aria-label="Últimas pulsaciones"></ol>
+      <ul id="padCounts" class="pad-counts" aria-label="Pulsaciones por botón"></ul>
+      <div class="row">
+        <button id="padClearBtn" class="btn">Borrar registro</button>
+      </div>
     </section>
 
     <!-- Solo modo estático -->
