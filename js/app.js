@@ -4,8 +4,10 @@ import { evaluate } from './evaluator.js';
 import { MotionAnalyzer, observe } from './motionAnalyzer.js';
 import { CalibrationWizard, CalState } from './calibrationWizard.js';
 import { RangeTracker, observeCalibration } from './calibration.js';
+import { ButtonTracker } from './buttonTracker.js';
 import { drawStick, formatStats, formatMotion, setVerdict, drawGraph,
-         drawMotionGraph, setObservations, formatCalibration, TRAIL_MS } from './render.js';
+         drawMotionGraph, setObservations, formatCalibration,
+         updatePad, resetPadView, TRAIL_MS } from './render.js';
 import { buildResult, save, count, clear, loadAll, downloadCsv } from './history.js';
 
 const reader = new GamepadReader();
@@ -13,8 +15,9 @@ const tester = new DriftTester();
 const motionL = new MotionAnalyzer();
 const motionR = new MotionAnalyzer();
 const wizard = new CalibrationWizard();
+const buttons = new ButtonTracker();
 
-let mode = 'static';          // 'static' | 'motion' | 'calibration'
+let mode = 'static';          // 'static' | 'motion' | 'calibration' | 'buttons'
 let threshold = 0.05;
 let savedThisTest = true;     // evita guardar la misma prueba varias veces
 let testPadName = '';         // mando con el que se inició la prueba
@@ -36,6 +39,7 @@ const calStatusEl = $('calStatus');
 const calStartBtn = $('calStartBtn');
 const calBarEl = $('calBar');
 const calStepEls = document.querySelectorAll('#calSteps li');
+const padNoteEl = $('padNote');
 
 // ---- Eventos de los controles ----
 startBtn.addEventListener('click', () => {
@@ -79,6 +83,7 @@ $('clearBtn').addEventListener('click', () => {
 $('modeStatic').addEventListener('click', () => setMode('static'));
 $('modeMotion').addEventListener('click', () => setMode('motion'));
 $('modeCalibration').addEventListener('click', () => setMode('calibration'));
+$('modeButtons').addEventListener('click', () => setMode('buttons'));
 $('motionResetBtn').addEventListener('click', resetMotion);
 
 calStartBtn.addEventListener('click', () => {
@@ -86,6 +91,7 @@ calStartBtn.addEventListener('click', () => {
   else wizard.start(performance.now());
 });
 $('calResetBtn').addEventListener('click', () => wizard.reset());
+$('padClearBtn').addEventListener('click', clearButtons);
 
 // ---- Modos ----
 function setMode(newMode) {
@@ -97,8 +103,15 @@ function setMode(newMode) {
   $('modeStatic').classList.toggle('active', mode === 'static');
   $('modeMotion').classList.toggle('active', mode === 'motion');
   $('modeCalibration').classList.toggle('active', mode === 'calibration');
+  $('modeButtons').classList.toggle('active', mode === 'buttons');
   resetMotion();
   wizard.reset();
+  clearButtons();
+}
+
+function clearButtons() {
+  buttons.reset();
+  resetPadView();
 }
 
 function resetMotion() {
@@ -121,8 +134,10 @@ function frame(now) {
       motionL.update(now, s.lx, s.ly);
       motionR.update(now, s.rx, s.ry);
     }
-  } else {
+  } else if (mode === 'calibration') {
     wizard.update(now, s);
+  } else {
+    buttons.update(now, reader.readButtons());
   }
 
   updateUi(now, connected);
@@ -168,7 +183,7 @@ function frame(now) {
 
     setObservations($('obsL'), observe(motionL));
     setObservations($('obsR'), observe(motionR));
-  } else {
+  } else if (mode === 'calibration') {
     // Calibración: el anillo muestra el recorrido (verde = llegó al borde) y la marca amarilla, el centro medido
     drawStick($('canvasL'), cur.l.x, cur.l.y, wizard.left, trailL, now, wizard.rangeLeft.sectorReach);
     drawStick($('canvasR'), cur.r.x, cur.r.y, wizard.right, trailR, now, wizard.rangeRight.sectorReach);
@@ -179,7 +194,19 @@ function frame(now) {
     $('calR').textContent = formatCalibration(result?.right);
     setObservations($('calObsL'), result ? observeCalibration(result.left) : []);
     setObservations($('calObsR'), result ? observeCalibration(result.right) : []);
+  } else {
+    updatePad(buttons, s, connected);
+    padNoteEl.textContent = padNoteText(connected);
   }
+}
+
+/** Aviso bajo el mando dibujado: mapeo no estándar o botones que pueden no llegar. */
+function padNoteText(connected) {
+  if (!connected) return '';
+  if (reader.mapping() !== 'standard') {
+    return '⚠ Este mando no usa el mapeo estándar: los botones del dibujo pueden no corresponder con los reales.';
+  }
+  return 'El botón PS y el panel táctil pueden no llegar al navegador: depende del sistema y del navegador.';
 }
 
 

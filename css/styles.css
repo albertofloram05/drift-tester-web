@@ -498,6 +498,7 @@ select:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
 .pad .key.missing { opacity: 0.3; }
+.pad.idle { opacity: 0.4; }                /* sin mando conectado */
 
 .pad .glyph {
   fill: none;

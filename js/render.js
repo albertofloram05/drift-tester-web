@@ -7,6 +7,7 @@ function clearCanvas(ctx, canvas, dpr) {
 
 export const TRAIL_MS = 500;   // cuánto tiempo recordamos el recorrido
 import { MotionAnalyzer } from './motionAnalyzer.js';
+import { BUTTONS, labelOf } from './buttonTracker.js';
 
 /** Dibuja un stick en su canvas. x e y van de -1 a 1. */
 /** Dibuja un stick. 'stats' y 'sectors' pueden ser null según el modo. */
@@ -291,4 +292,132 @@ export function setObservations(el, list) {
     li.textContent = o.text;
     return li;
   }));
+}
+
+
+// ---------- Modo botones ----------
+
+const PAD_STICK_TRAVEL = 12;   // cuánto se desplaza la tapa de un stick del dibujo (unidades del SVG)
+const LOG_SHOWN = 100;         // sucesos que se muestran en la lista (el más reciente arriba)
+
+/** Tiempo del registro: 12340 -> '12.340 s'. */
+export function formatPadTime(ms) {
+  return `${(ms / 1000).toFixed(3)} s`;
+}
+
+/** Duración de una pulsación: 300 -> '300 ms'; 1250 -> '1.25 s'. */
+export function formatHeld(ms) {
+  return ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(2)} s`;
+}
+
+/** Texto de un suceso del registro: 'Cruz (X) pulsado' o 'Cruz (X) soltado (300 ms)'. */
+export function describeButtonEvent(e) {
+  const name = labelOf(e.id);
+  return e.type === 'press' ? `${name} pulsado` : `${name} soltado (${formatHeld(e.heldMs)})`;
+}
+
+/**
+ * Cuánto se mueve la tapa del stick dibujado. x e y van de -1 a 1; si el mando da más de 1
+ * en una esquina, se recorta al círculo para que la tapa no se salga de su base.
+ */
+export function stickOffset(x, y, travel = PAD_STICK_TRAVEL) {
+  const d = Math.hypot(x, y);
+  const k = d > 1 ? 1 / d : 1;
+  return { dx: x * k * travel, dy: y * k * travel };
+}
+
+let padEls = null;   // elementos del dibujo: se buscan una sola vez, no en cada fotograma
+
+function padElements() {
+  if (padEls) return padEls;
+  const keys = new Map();
+  const fills = new Map();
+  for (const b of BUTTONS) {
+    keys.set(b.id, document.querySelector(`#padSvg [data-key="${b.id}"]`));
+    if (b.analog) fills.set(b.id, document.querySelector(`#padSvg [data-fill="${b.id}"]`));
+  }
+  padEls = {
+    keys, fills,
+    svg: document.getElementById('padSvg'),
+    lastV: new Map(),     // último valor escrito en cada gatillo, para no repetir escrituras
+    stickL: document.getElementById('padStickL'),
+    stickR: document.getElementById('padStickR'),
+    sig: '',              // firma de lo que muestra el registro, para repintarlo solo si cambia
+  };
+  return padEls;
+}
+
+/** Fuerza a repintar el registro en el próximo fotograma (se llama tras borrarlo). */
+export function resetPadView() {
+  if (padEls) padEls.sig = '';
+}
+
+/**
+ * Actualiza el mando dibujado y el registro. 's' son los ejes (o null si no hay lectura)
+ * y 'connected' dice si hay un mando conectado.
+ */
+export function updatePad(tracker, s, connected) {
+  const el = padElements();
+  let present = 0;
+
+  el.svg.classList.toggle('idle', !connected);      // sin mando, el dibujo entero se atenúa
+
+  for (const b of BUTTONS) {
+    const st = tracker.state(b.id);
+    const key = el.keys.get(b.id);
+    key.classList.toggle('pressed', st.down);
+    key.classList.toggle('missing', connected && !st.present);   // un mando conectado que no envía este botón
+    if (st.present) present++;
+
+    const fill = el.fills.get(b.id);                // gatillos: relleno según cuánto se aprietan
+    if (fill && el.lastV.get(b.id) !== st.value) {
+      fill.style.setProperty('--v', st.value);
+      el.lastV.set(b.id, st.value);
+    }
+  }
+
+  const l = stickOffset(s?.lx ?? 0, s?.ly ?? 0);
+  const r = stickOffset(s?.rx ?? 0, s?.ry ?? 0);
+  el.stickL.style.transform = `translate(${l.dx.toFixed(1)}px, ${l.dy.toFixed(1)}px)`;
+  el.stickR.style.transform = `translate(${r.dx.toFixed(1)}px, ${r.dy.toFixed(1)}px)`;
+
+  renderPadLog(tracker, present, el);
+}
+
+/** Repinta la lista del registro y los contadores, solo si algo ha cambiado. */
+function renderPadLog(tracker, present, el) {
+  const log = tracker.log;
+  const last = log[log.length - 1];
+  const sig = [log.length, tracker.totalPresses, present, last?.t, last?.id, last?.type].join('|');
+  if (sig === el.sig) return;
+  el.sig = sig;
+
+  document.getElementById('padSummary').textContent = `Pulsaciones totales: ${tracker.totalPresses}`;
+
+  const items = log.slice(-LOG_SHOWN).reverse().map(e => {
+    const li = document.createElement('li');
+    li.className = e.type;
+    const t = document.createElement('span');
+    t.className = 't';
+    t.textContent = formatPadTime(e.t);
+    const what = document.createElement('span');
+    what.className = 'what';
+    what.textContent = describeButtonEvent(e);
+    li.append(t, what);
+    return li;
+  });
+  document.getElementById('padLog').replaceChildren(...items);
+
+  const counts = BUTTONS.map(b => {
+    const st = tracker.state(b.id);
+    const li = document.createElement('li');
+    li.className = !st.present ? 'absent' : st.count === 0 ? 'zero' : '';
+    const name = document.createElement('span');
+    name.textContent = b.label;
+    const n = document.createElement('b');
+    n.textContent = st.count;
+    li.append(name, n);
+    return li;
+  });
+  document.getElementById('padCounts').replaceChildren(...counts);
 }
