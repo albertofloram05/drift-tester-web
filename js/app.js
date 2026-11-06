@@ -7,7 +7,7 @@ import { RangeTracker, observeCalibration } from './calibration.js';
 import { ButtonTracker } from './buttonTracker.js';
 import { drawStick, formatStats, formatMotion, setVerdict, drawGraph,
          drawMotionGraph, setObservations, formatCalibration,
-         updatePad, resetPadView, describePadDiagnostic, TRAIL_MS } from './render.js';
+         updatePad, resetPadView, describePadDiagnostic, padNoteText, TRAIL_MS } from './render.js';
 import { buildResult, save, count, clear, loadAll, downloadCsv } from './history.js';
 
 const reader = new GamepadReader();
@@ -198,18 +198,9 @@ function frame(now) {
     setObservations($('calObsR'), result ? observeCalibration(result.right) : []);
   } else {
     updatePad(buttons, s, connected);
-    padNoteEl.textContent = padNoteText(connected);
+    padNoteEl.textContent = padNoteText(connected, reader.mapping(), padButtons?.length ?? 0);
     padDiagEl.textContent = describePadDiagnostic(padButtons, reader.mapping());
   }
-}
-
-/** Aviso bajo el mando dibujado: mapeo no estándar o botones que pueden no llegar. */
-function padNoteText(connected) {
-  if (!connected) return '';
-  if (reader.mapping() !== 'standard') {
-    return '⚠ Este mando no usa el mapeo estándar: los botones del dibujo pueden no corresponder con los reales.';
-  }
-  return 'El botón PS y el panel táctil pueden no llegar al navegador: depende del sistema y del navegador.';
 }
 
 

@@ -431,3 +431,20 @@ export function describePadDiagnostic(snapshot, mapping) {
          `Botones que envía el navegador: ${snapshot.length} · ` +
          `Pulsados ahora (índice): ${pressed.length ? pressed.join(', ') : 'ninguno'}`;
 }
+
+
+/**
+ * Aviso bajo el mando dibujado. 'buttonCount' es el número de botones que envía el navegador:
+ * el estándar son 17 (índices 0–16), y el panel táctil sería el 18.º (índice 17), si se envía.
+ */
+export function padNoteText(connected, mapping, buttonCount) {
+  if (!connected) return '';
+  if (mapping !== 'standard') {
+    return '⚠ Este mando no usa el mapeo estándar: los botones del dibujo pueden no corresponder con los reales.';
+  }
+  if (buttonCount <= 17) {
+    return `Este navegador no envía el panel táctil (el mando reporta ${buttonCount} botones), ` +
+           'así que no puede registrarse aquí. El botón PS puede no llegar si lo captura el sistema.';
+  }
+  return 'El botón PS y el panel táctil pueden no llegar al navegador: depende del sistema y del navegador.';
+}
