@@ -421,3 +421,13 @@ function renderPadLog(tracker, present, el) {
   });
   document.getElementById('padCounts').replaceChildren(...counts);
 }
+
+
+/** Texto de diagnóstico: cuántos botones envía el navegador y cuáles están pulsados (por índice). */
+export function describePadDiagnostic(snapshot, mapping) {
+  if (!snapshot) return 'Sin mando conectado.';
+  const pressed = snapshot.flatMap((b, i) => (b.pressed ? [i] : []));
+  return `Mapeo: ${mapping === 'standard' ? 'estándar' : 'no estándar'} · ` +
+         `Botones que envía el navegador: ${snapshot.length} · ` +
+         `Pulsados ahora (índice): ${pressed.length ? pressed.join(', ') : 'ninguno'}`;
+}

@@ -459,6 +459,16 @@ select:disabled { opacity: 0.5; cursor: not-allowed; }
   transition: width 0.15s linear;
 }
 
+/* ---------- Modo botones: diagnóstico ---------- */
+.pad-diag {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.pad-diag summary { cursor: pointer; }
+.pad-diag p { margin: 8px 0 0; }
+#padDiag { font-family: var(--font-mono); }
+
 /* Modo botones: oculta lo del estático y los sticks, y muestra lo suyo */
 .buttons-only { display: none; }
 

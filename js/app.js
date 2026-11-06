@@ -7,7 +7,7 @@ import { RangeTracker, observeCalibration } from './calibration.js';
 import { ButtonTracker } from './buttonTracker.js';
 import { drawStick, formatStats, formatMotion, setVerdict, drawGraph,
          drawMotionGraph, setObservations, formatCalibration,
-         updatePad, resetPadView, TRAIL_MS } from './render.js';
+         updatePad, resetPadView, describePadDiagnostic, TRAIL_MS } from './render.js';
 import { buildResult, save, count, clear, loadAll, downloadCsv } from './history.js';
 
 const reader = new GamepadReader();
@@ -40,6 +40,7 @@ const calStartBtn = $('calStartBtn');
 const calBarEl = $('calBar');
 const calStepEls = document.querySelectorAll('#calSteps li');
 const padNoteEl = $('padNote');
+const padDiagEl = $('padDiag');
 
 // ---- Eventos de los controles ----
 startBtn.addEventListener('click', () => {
@@ -125,6 +126,7 @@ function frame(now) {
 
   const connected = reader.detect();
   const s = reader.read(now);
+  const padButtons = mode === 'buttons' ? reader.readButtons() : null;   // solo se leen en el modo botones
 
   // Cada modo procesa la muestra a su manera
   if (mode === 'static') {
@@ -137,7 +139,7 @@ function frame(now) {
   } else if (mode === 'calibration') {
     wizard.update(now, s);
   } else {
-    buttons.update(now, reader.readButtons());
+    buttons.update(now, padButtons);    
   }
 
   updateUi(now, connected);
@@ -197,6 +199,7 @@ function frame(now) {
   } else {
     updatePad(buttons, s, connected);
     padNoteEl.textContent = padNoteText(connected);
+    padDiagEl.textContent = describePadDiagnostic(padButtons, reader.mapping());
   }
 }
 
