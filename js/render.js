@@ -11,7 +11,7 @@ import { BUTTONS, labelOf } from './buttonTracker.js';
 
 /** Dibuja un stick en su canvas. x e y van de -1 a 1. */
 /** Dibuja un stick. 'stats' y 'sectors' pueden ser null según el modo. */
-export function drawStick(canvas, x, y, stats, trail, now, sectors = null) {
+export function drawStick(canvas, x, y, stats, trail, now, sectors = null, overlay = null) {
   const dpr = window.devicePixelRatio || 1;
   const size = canvas.clientWidth;
   if (size === 0) return;
@@ -82,7 +82,41 @@ export function drawStick(canvas, x, y, stats, trail, now, sectors = null) {
   ctx.beginPath();
   ctx.arc(c + x * r, c + y * r, 6, 0, Math.PI * 2);
   ctx.fill();
-}
+
+  // Modo zona muerta: círculo de la zona muerta y movimiento filtrado (verde)
+  if (overlay) {
+    if (overlay.deadzone > 0) {
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.12)';
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      ctx.arc(c, c, overlay.deadzone * r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    for (const p of overlay.filteredTrail ?? []) {
+      const alpha = 1 - (now - p.t) / TRAIL_MS;
+      if (alpha <= 0) continue;
+      ctx.fillStyle = `rgba(34, 197, 94, ${alpha * 0.7})`;
+      ctx.beginPath();
+      ctx.arc(c + p.x * r, c + p.y * r, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (overlay.filteredPoint) {
+      ctx.fillStyle = '#22c55e';
+      ctx.strokeStyle = '#0d1117';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(c + overlay.filteredPoint.x * r, c + overlay.filteredPoint.y * r, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
+}  
 
 /** Número con signo y tres decimales: +0.012, -0.004 */
 const sgn = v => (v >= 0 ? '+' : '') + v.toFixed(3);
@@ -447,4 +481,29 @@ export function padNoteText(connected, mapping, buttonCount) {
            'así que no puede registrarse aquí. El botón PS puede no llegar si lo captura el sistema.';
   }
   return 'El botón PS y el panel táctil pueden no llegar al navegador: depende del sistema y del navegador.';
+}
+
+// ---------- Modo zona muerta ----------
+
+/** Texto de estadísticas del modo zona muerta. 'cur' es la lectura original y 'out' la filtrada. */
+export function formatDeadzone(an, cur, out, d) {
+  const lines = [
+    `Zona muerta: ${Math.round(d * 100)} %`,
+    `Original:    X ${sgn(cur.x)}  Y ${sgn(cur.y)}  (mag ${out.r.toFixed(3)})`,
+    `Filtrado:    X ${sgn(out.x)}  Y ${sgn(out.y)}  (mag ${out.rOut.toFixed(3)})`,
+  ];
+
+  if (an.count === 0) {
+    lines.push('Sin datos de prueba');
+    return lines.join('\n');
+  }
+
+  lines.push(
+    `Muestras:    ${an.count}`,
+    `Filtradas:   ${an.filteredCount} (${an.filteredPercent.toFixed(1)} %)`,
+    `Mag. media original: ${an.meanOriginal.toFixed(3)}`,
+    `Mag. media filtrada: ${an.meanFiltered.toFixed(3)}`,
+    `Mag. máx. original:  ${an.maxOriginal.toFixed(3)}`,
+  );
+  return lines.join('\n');
 }
