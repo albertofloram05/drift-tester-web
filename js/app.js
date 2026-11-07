@@ -9,6 +9,8 @@ import { drawStick, formatStats, formatMotion, setVerdict, drawGraph,
          drawMotionGraph, setObservations, formatCalibration,
          updatePad, resetPadView, describePadDiagnostic, padNoteText, TRAIL_MS } from './render.js';
 import { buildResult, save, count, clear, loadAll, downloadCsv } from './history.js';
+import { DeadzoneAnalyzer, applyDeadzone } from './deadzone.js';
+import { formatDeadzone } from './render.js';
 
 const reader = new GamepadReader();
 const tester = new DriftTester();
@@ -41,6 +43,18 @@ const calBarEl = $('calBar');
 const calStepEls = document.querySelectorAll('#calSteps li');
 const padNoteEl = $('padNote');
 const padDiagEl = $('padDiag');
+
+// ---- Modo zona muerta ----
+const dzStats = new DeadzoneAnalyzer();
+let dzStick = 'left';         // 'left' | 'right'
+let dzValue = 0.10;           // zona muerta de 0 a 0,30
+let dzRunning = false;        // ¿se están acumulando estadísticas?
+let dzLostPad = false;        // ¿se paró la prueba porque el mando dejó de dar lecturas?
+const dzStickEl = $('dzStick');
+const dzSliderEl = $('dzSlider');
+const dzValueEl = $('dzValue');
+const dzStartBtn = $('dzStartBtn');
+const dzStatusEl = $('dzStatus');
 
 // ---- Eventos de los controles ----
 startBtn.addEventListener('click', () => {
@@ -94,6 +108,32 @@ calStartBtn.addEventListener('click', () => {
 $('calResetBtn').addEventListener('click', () => wizard.reset());
 $('padClearBtn').addEventListener('click', clearButtons);
 
+dzStickEl.addEventListener('change', () => {
+  dzStick = dzStickEl.value === 'right' ? 'right' : 'left';
+  dzStats.reset();                        // no mezclar muestras de dos sticks
+});
+
+dzSliderEl.addEventListener('input', () => {
+  const v = Number(dzSliderEl.value);
+  if (!Number.isFinite(v) || v < 0 || v > 30) return;   // ignora valores fuera de rango
+  dzValue = v / 100;
+  dzValueEl.textContent = `${v} %`;
+  dzSliderEl.setAttribute('aria-valuetext', `${v} por ciento`);
+  dzStats.reset();                        // las muestras anteriores usaron otra zona muerta
+});
+
+dzStartBtn.addEventListener('click', () => {
+  if (dzRunning) {
+    dzRunning = false;
+  } else {
+    dzStats.reset();
+    dzLostPad = false;
+    dzRunning = true;
+  }
+});
+
+$('dzResetBtn').addEventListener('click', () => { dzStats.reset(); dzLostPad = false; });
+
 // ---- Modos ----
 function setMode(newMode) {
   if (newMode === mode) return;
@@ -118,6 +158,46 @@ function clearButtons() {
 function resetMotion() {
   motionL.reset();
   motionR.reset();
+}
+
+// ---- Modo zona muerta: funciones ----
+function resetDeadzone() {
+  dzRunning = false;
+  dzLostPad = false;
+  dzStats.reset();
+}
+
+/** Dibuja el stick elegido con su zona muerta y actualiza textos y botones. */
+function updateDeadzoneView(cur, now, connected) {
+  const p = dzStick === 'left' ? cur.l : cur.r;
+  const trail = dzStick === 'left' ? trailL : trailR;
+  const out = applyDeadzone(p.x, p.y, dzValue);
+
+  // La estela filtrada sale de la estela original (solo dura 500 ms)
+  const filteredTrail = trail.map(t => {
+    const o = applyDeadzone(t.x, t.y, dzValue);
+    return { x: o.x, y: o.y, t: t.t };
+  });
+
+  drawStick($('canvasDz'), p.x, p.y, null, trail, now, null,
+            { deadzone: dzValue, filteredTrail, filteredPoint: out });
+  $('dzStats').textContent = formatDeadzone(dzStats, p, out, dzValue);
+
+  dzStartBtn.textContent = dzRunning ? 'Detener' : 'Iniciar prueba';
+  dzStartBtn.disabled = !connected && !dzRunning;
+
+  const side = dzStick === 'left' ? 'izquierdo' : 'derecho';
+  if (!connected) {
+    dzStatusEl.textContent = dzLostPad
+      ? 'El mando se ha desconectado. Prueba detenida; las estadísticas se conservan.'
+      : 'Conecta un mando';
+  } else if (dzRunning) {
+    dzStatusEl.textContent = `Analizando el stick ${side}... muestras: ${dzStats.count}`;
+  } else if (dzStats.count > 0) {
+    dzStatusEl.textContent = `Prueba detenida. Muestras: ${dzStats.count}`;
+  } else {
+    dzStatusEl.textContent = `Listo. Mueve el stick ${side} o pulsa «Iniciar prueba».`;
+  }
 }
 
 // ---- Bucle principal ----
