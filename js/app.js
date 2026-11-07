@@ -107,6 +107,7 @@ calStartBtn.addEventListener('click', () => {
 });
 $('calResetBtn').addEventListener('click', () => wizard.reset());
 $('padClearBtn').addEventListener('click', clearButtons);
+$('modeDeadzone').addEventListener('click', () => setMode('deadzone'));
 
 dzStickEl.addEventListener('change', () => {
   dzStick = dzStickEl.value === 'right' ? 'right' : 'left';
@@ -145,9 +146,11 @@ function setMode(newMode) {
   $('modeMotion').classList.toggle('active', mode === 'motion');
   $('modeCalibration').classList.toggle('active', mode === 'calibration');
   $('modeButtons').classList.toggle('active', mode === 'buttons');
+  $('modeDeadzone').classList.toggle('active', mode === 'deadzone');  
   resetMotion();
   wizard.reset();
   clearButtons();
+  resetDeadzone();
 }
 
 function clearButtons() {
@@ -218,6 +221,16 @@ function frame(now) {
     }
   } else if (mode === 'calibration') {
     wizard.update(now, s);
+  } else if (mode === 'deadzone') {                       // NUEVO (inicio)
+    if (s) {
+      if (dzRunning) {
+        const p = dzStick === 'left' ? { x: s.lx, y: s.ly } : { x: s.rx, y: s.ry };
+        dzStats.add(p.x, p.y, dzValue);       // ignora lecturas no válidas
+      }
+    } else if (dzRunning) {
+      dzRunning = false;                      // el mando dejó de dar lecturas
+      dzLostPad = true;
+    }                                                     // NUEVO (fin)
   } else {
     buttons.update(now, padButtons);    
   }
@@ -276,6 +289,8 @@ function frame(now) {
     $('calR').textContent = formatCalibration(result?.right);
     setObservations($('calObsL'), result ? observeCalibration(result.left) : []);
     setObservations($('calObsR'), result ? observeCalibration(result.right) : []);
+  } else if (mode === 'deadzone') {                       // NUEVO
+    updateDeadzoneView(cur, now, connected);              // NUEVO
   } else {
     updatePad(buttons, s, connected);
     padNoteEl.textContent = padNoteText(connected, reader.mapping(), padButtons?.length ?? 0);
