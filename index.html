@@ -28,7 +28,8 @@
       <button id="modeStatic" class="mode-btn active" type="button">Modo estático</button>
       <button id="modeMotion" class="mode-btn" type="button">Modo movimiento</button>
       <button id="modeCalibration" class="mode-btn" type="button">Modo calibración</button>
-      <button id="modeButtons" class="mode-btn" type="button">Modo botones</button>      
+      <button id="modeButtons" class="mode-btn" type="button">Modo botones</button>
+      <button id="modeDeadzone" class="mode-btn" type="button">Modo zona muerta</button>         
     </div>
   </header>
 
@@ -215,6 +216,42 @@
       </div>
     </section>
 
+    <!-- Solo modo zona muerta -->
+    <section class="card panel deadzone-only">
+      <div id="dzControls">
+        <label>Stick
+          <select id="dzStick">
+            <option value="left" selected>Izquierdo</option>
+            <option value="right">Derecho</option>
+          </select>
+        </label>
+        <label>Zona muerta: <b id="dzValue">10 %</b>
+          <input id="dzSlider" type="range" min="0" max="30" step="1" value="10"
+                 aria-valuetext="10 por ciento">
+        </label>
+      </div>
+
+      <canvas id="canvasDz" width="300" height="300"
+              aria-label="Stick con la zona muerta simulada: punto blanco original, punto verde filtrado"></canvas>
+      <p class="legend-line">
+        <i class="dot x"></i>Original <i class="dot ok"></i>Filtrado <i class="dot dz"></i>Zona muerta
+      </p>
+
+      <pre id="dzStats"></pre>
+      <p id="dzStatus">Conecta un mando</p>
+
+      <div class="row">
+        <button id="dzStartBtn" class="btn primary">Iniciar prueba</button>
+        <button id="dzResetBtn" class="btn">Reiniciar estadísticas</button>
+      </div>
+      <p class="hint">
+        La zona muerta es una simulación por software: esta página solo lee el mando, no
+        cambia su configuración interna. Calcula qué lecturas se anularían con una zona
+        muerta radial y cómo se remapea el resto del recorrido. Al mover el control o cambiar
+        de stick, las estadísticas empiezan de nuevo.
+      </p>
+    </section>
+
     <!-- Solo modo estático -->
     <section class="card panel static-only">
       <p id="status">Conecta un mando</p>
@@ -340,6 +377,16 @@
         no puede modificar su configuración interna ni arreglar el drift, y los valores
         sugeridos son orientativos, no un estándar.
       </p>      
+
+      <h4>¿Qué hace el modo zona muerta?</h4>
+      <p>
+        Simula, con las lecturas reales de un stick, qué pasaría con una zona muerta radial
+        que puedes ajustar de 0 a 30 %. Las lecturas dentro del círculo se anulan y el resto se
+        remapea para que el stick siga llegando a su recorrido completo. Muestra el movimiento
+        original y el filtrado, y cuántas muestras se filtran. Es solo una simulación: la página
+        no modifica la configuración del mando, y cada juego aplica su propia zona muerta, a
+        menudo por ejes en lugar de radial.
+      </p>
 
       <h4>¿Qué hace el modo botones?</h4>
       <p>

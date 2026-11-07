@@ -714,3 +714,58 @@ select:disabled { opacity: 0.5; cursor: not-allowed; }
   .mode-switch { max-width: 100%; }                      /* tres modos: que no se salga de la pantalla */
   .mode-btn { padding: 8px 10px; font-size: 0.9rem; }
 }
+
+/* ---------- Modo zona muerta ---------- */
+.deadzone-only { display: none; }
+
+[data-mode="deadzone"] .static-only { display: none !important; }
+[data-mode="deadzone"] #sticks { display: none; }
+[data-mode="deadzone"] .deadzone-only { display: block; }
+
+#dzControls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+#dzControls label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: left;
+}
+
+#dzControls b { color: var(--text); font-family: var(--font-mono); }
+
+#dzSlider {
+  width: 220px;
+  max-width: 100%;
+  accent-color: var(--blue);
+}
+
+.legend-line { margin: 0 0 12px; font-size: 0.8rem; color: var(--muted); }
+.dot.ok { background: var(--green); }
+.dot.dz { background: var(--orange); }
+
+#dzStatus { margin: 12px 0; }
+
+.deadzone-only .hint { margin-top: 14px; }
+
+/* Cinco modos: la rejilla de 2 columnas empieza antes y el último botón ocupa el ancho entero */
+@media (max-width: 860px) {
+  .mode-switch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    max-width: 420px;
+    border-radius: 22px;
+  }
+  .mode-btn:last-child { grid-column: 1 / -1; }
+}
