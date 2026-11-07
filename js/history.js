@@ -97,5 +97,8 @@ export function downloadCsv(results, filename = 'drift-resultados.csv') {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  URL.revokeObjectURL(url);   // liberar la memoria del archivo temporal
+  
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 1000);
 }
