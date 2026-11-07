@@ -136,6 +136,7 @@ Después abre http://localhost:8000. En Windows, si `python3` no existe, usa `py
 ```
 drift-tester-web/
 ├── index.html
+├── favicon.png
 ├── css/
 │   └── styles.css
 ├── js/
@@ -160,7 +161,8 @@ drift-tester-web/
     ├── modo-movimiento.png
     ├── modo-calibracion.png
     ├── modo-botones.png
-    └── modo-zona-muerta.png
+    ├── modo-zona-muerta.png
+    └── og-image.png
 ```
 
 La lógica (`stickStats`, `evaluator`, `driftTester`, `motionAnalyzer`, `calibration`, `calibrationWizard`, `buttonTracker`, `deadzone`) no depende del navegador ni de la página, así que se puede probar por separado desde la consola.
