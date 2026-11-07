@@ -32,9 +32,15 @@ Anillo de 16 sectores que mide el centro real y el recorrido de cada stick y sug
 
 Mando dibujado que se ilumina al pulsar cada botón, con el registro de las pulsaciones.
 
+### Modo zona muerta
+
+![Modo zona muerta con el círculo de la zona muerta y el movimiento filtrado](docs/modo-zona-muerta.png)
+
+Simulación de una zona muerta radial sobre las lecturas reales de un stick, con el movimiento original y el filtrado.
+
 ## Qué hace
 
-Lee los ejes del mando en tiempo real mediante la **Gamepad API** del navegador y ofrece cuatro modos.
+Lee los ejes del mando en tiempo real mediante la **Gamepad API** del navegador y ofrece cinco modos.
 
 ### Modo estático (prueba de drift)
 
@@ -82,6 +88,19 @@ Dibuja un mando que se ilumina al pulsar cada botón y registra las pulsaciones:
 
 > **Solo es fiable con el mapeo estándar.** Si el navegador no lo usa, la página lo avisa. **El panel táctil puede no registrarse:** es un botón extra que algunos sistemas no exponen. En Ubuntu, con Chrome, Edge, Brave y Firefox, el navegador envía 17 botones y el panel táctil no está entre ellos (el sistema lo usa como touchpad y mueve el cursor). Si no llega, se atenúa en el dibujo y la página lo indica. El botón PS también puede ser capturado por el sistema antes de llegar a la página.
 
+### Modo zona muerta
+
+Experimenta con una zona muerta sobre las lecturas reales de un stick y mira qué se filtra:
+
+- **Stick** izquierdo o derecho, y **zona muerta** ajustable de 0 a 30 % con pasos de 1 punto.
+- **Gráfica circular:** el círculo naranja es la zona muerta, el punto blanco es la lectura original y el verde, la filtrada, cada uno con su estela de medio segundo.
+- **Algoritmo radial con remapeo:** si la magnitud `r` no supera la zona muerta `d`, la salida es (0, 0). Si la supera, se conserva la dirección y la magnitud pasa a `(r − d) / (1 − d)`, limitada a 1, para que el stick siga alcanzando su recorrido completo.
+- **Estadísticas** mientras dura la prueba: muestras, muestras filtradas (número y porcentaje), magnitud media original y filtrada, y magnitud máxima original.
+
+Al mover el control o cambiar de stick las estadísticas empiezan de nuevo, porque las muestras anteriores usaron otra zona muerta. Si el mando se desconecta con la prueba en marcha, se detiene y conserva lo recogido. Los detalles del cálculo están en [docs/zona-muerta.md](docs/zona-muerta.md).
+
+> **Es una simulación por software:** la página solo lee el mando. No cambia su configuración interna ni aplica nada de forma permanente.
+
 ### Historial
 
 Cada prueba estática se guarda en el navegador (`localStorage`) y puede exportarse a **CSV**.
@@ -128,6 +147,7 @@ drift-tester-web/
 │   ├── motionAnalyzer.js     # análisis y observaciones del modo movimiento
 │   ├── calibration.js        # centro, rango, zona muerta y observaciones de la calibración
 │   ├── calibrationWizard.js  # máquina de estados del asistente de calibración
+│   ├── deadzone.js           # zona muerta radial y estadísticas del modo zona muerta
 │   ├── buttonTracker.js      # tabla de botones y registro de pulsaciones
 │   ├── history.js            # historial (localStorage) y exportación CSV
 │   ├── level.js              # niveles del veredicto
@@ -135,18 +155,21 @@ drift-tester-web/
 ├── fonts/                    # tipografías, servidas desde el propio sitio
 └── docs/
     ├── calibracion.md
+    ├── zona-muerta.md    
     ├── modo-estatico.png
     ├── modo-movimiento.png
     ├── modo-calibracion.png
-    └── modo-botones.png
+    ├── modo-botones.png
+    └── modo-zona-muerta.png
 ```
 
-La lógica (`stickStats`, `evaluator`, `driftTester`, `motionAnalyzer`, `calibration`, `calibrationWizard`, `buttonTracker`) no depende del navegador ni de la página, así que se puede probar por separado desde la consola.
+La lógica (`stickStats`, `evaluator`, `driftTester`, `motionAnalyzer`, `calibration`, `calibrationWizard`, `buttonTracker`, `deadzone`) no depende del navegador ni de la página, así que se puede probar por separado desde la consola.
 
 ## Limitaciones
 
 - **Umbrales:** comprobados de forma orientativa con cinco mandos (dos con síntomas) en una sola sesión; el detalle está en [docs/calibracion.md](docs/calibracion.md). Siguen sin ser un estándar y conviene repetir la prueba varias veces.
 - **Modo calibración:** la zona muerta sugerida (sesgo + 2,5 × ruido, mínimo 0,05), los límites de zona muerta «normal» y «alta» (0,10 y 0,25) y los de circularidad (0,90 y 0,80) son valores iniciales que no se han calibrado con una muestra de mandos. Tómalos como punto de partida; el detalle está en [docs/calibracion.md](docs/calibracion.md).
+- **Modo zona muerta:** es una simulación radial sobre las lecturas del navegador. Muchos juegos usan zonas muertas por ejes u otras curvas, así que el resultado en un juego concreto puede diferir. No corrige el centro del stick: el círculo está en el (0, 0) ideal. Si el stick no llega a 1 en su recorrido, la salida filtrada tampoco llegará a 1. Las estadísticas cuentan fotogramas con lectura, no informes únicos del mando.
 - **Los porcentajes son aproximaciones** de los valores que reporta el mando, no medidas físicas del recorrido.
 - **La Gamepad API no garantiza una frecuencia de muestreo fija.** Las muestras se recogen en cada fotograma, así que dependen de la frecuencia de tu pantalla.
 - **El eje horizontal de la gráfica estática reparte muestras, no segundos.** La gráfica del modo movimiento sí usa tiempo real.
