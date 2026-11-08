@@ -275,9 +275,14 @@
         <label>Umbral
           <input id="threshold" type="number" min="0.01" max="0.30" step="0.01" value="0.05">
         </label>
+        <label>Nombre del mando (opcional)
+          <input id="padLabel" type="text" maxlength="40" autocomplete="off"
+                 placeholder="Ej.: Mando con drift" aria-describedby="padLabelHint">
+        </label>        
         <button id="startBtn" class="btn primary">Iniciar prueba</button>
         <button id="resetBtn" class="btn">Reiniciar</button>
       </div>
+      <p id="padLabelHint" class="hint">Si tienes dos mandos del mismo modelo, ponles nombre para distinguirlos en el historial. El navegador no permite reconocerlos solo.</p>      
     </section>
 
     <section class="card panel history static-only">

@@ -245,7 +245,7 @@ pre {
   text-align: left;
 }
 
-select, input[type="number"], input[type="date"], input[type="search"] {
+select, input[type="number"], input[type="date"], input[type="search"], input[type="text"] {
   background: #0d1117;
   color: var(--text);
   border: 1px solid var(--border);
@@ -792,6 +792,7 @@ select:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
 input[type="date"] { color-scheme: dark; }          /* el selector de fecha del navegador, en oscuro */
+#padLabel { width: 210px; max-width: 100%; }
 
 /* ---------- Tabla de resultados ---------- */
 .table-wrap {
@@ -845,7 +846,8 @@ input[type="date"] { color-scheme: dark; }          /* el selector de fecha del 
   background: var(--card);
   box-shadow: -8px 0 8px -8px rgba(0, 0, 0, 0.6);
 }
-#historyTable th:last-child { z-index: 2; }       /* la cabecera fija está por encima de las dos esquinas */
+#historyTable .row-del, #historyTable .row-export, #historyTable .row-rename { padding: 4px 10px; font-size: 0.72rem; }
+#historyTable td.actions .btn { display: block; margin: 3px auto; }   /* apilados: la columna fija no se ensancha */
 
 .hist-level {
   display: inline-block;

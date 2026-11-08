@@ -7,6 +7,7 @@ export const HEADER = [
   'fecha', 'duracion_s', 'mando', 'umbral',
   'izq_resultado', 'izq_sesgo', 'izq_desv_est', 'izq_pct_sobre_umbral', 'izq_muestras',
   'der_resultado', 'der_sesgo', 'der_desv_est', 'der_pct_sobre_umbral', 'der_muestras',
+  'etiqueta',                                   // al final: las columnas anteriores no cambian de posición
 ].join(',');
 
 const pad = n => String(n).padStart(2, '0');
@@ -37,13 +38,26 @@ function newId() {
   return `t-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-/** Construye el resultado de una prueba a partir de las estadísticas. */
-export function buildResult(gamepad, durationSec, threshold, left, right) {
+/** Longitud máxima del nombre personalizado de un mando. */
+export const MAX_LABEL = 40;
+
+/** Limpia el nombre que escribe el usuario: sin saltos de línea ni espacios sobrantes, y con límite de longitud. */
+export function normalizeLabel(text) {
+  return String(text ?? '').replace(/\s+/g, ' ').trim().slice(0, MAX_LABEL).trim();
+}
+
+/**
+ * Construye el resultado de una prueba a partir de las estadísticas.
+ * 'label' es el nombre personalizado del mando (opcional): la API de mandos no da número de serie,
+ * así que es la única forma de distinguir dos mandos del mismo modelo.
+ */
+export function buildResult(gamepad, durationSec, threshold, left, right, label = '') {
   return {
     id: newId(),
     dateTime: nowText(),
     durationSec,
     gamepad,
+    label: normalizeLabel(label),
     threshold,
     left: summarize(left, threshold),
     right: summarize(right, threshold),
@@ -135,8 +149,9 @@ export function save(result, storage = defaultStorage()) {
 }
 
 /** Texto para el usuario según lo que devolvió save(). */
-export function saveStatusText(res) {
-  if (res.ok) return res.duplicate ? 'Esta prueba ya estaba guardada.' : 'Prueba guardada en el historial.';
+export function saveStatusText(res, label = '') {
+  if (res.ok && !res.duplicate) return `Prueba guardada en el historial${label ? ` (mando «${label}»)` : ''}.`;
+  if (res.ok) return 'Esta prueba ya estaba guardada.';
   switch (res.reason) {
     case 'quota':
       return 'No se pudo guardar: el almacenamiento del navegador está lleno. Exporta el CSV y borra pruebas antiguas.';
@@ -171,6 +186,40 @@ export function removeById(id, storage = defaultStorage()) {
 export function deleteConfirmText(row) {
   return `¿Eliminar la prueba nº ${row.number} del ${row.dateTime}?\n\n` +
          'Se borrarán los resultados de AMBOS sticks (izquierdo y derecho) de esa prueba. No se puede deshacer.';
+}
+
+/**
+ * Cambia el nombre personalizado del mando de UNA prueba (afecta a sus dos sticks). '' lo quita.
+ * Devuelve { ok: true, label } o { ok: false, reason: 'notfound' | 'quota' | 'blocked' }.
+ */
+export function setLabelById(id, label, storage = defaultStorage()) {
+  const { list, status } = readStored(storage);
+  if (status === 'unavailable') return { ok: false, reason: 'blocked' };
+
+  const i = list.findIndex(r => r?.id === id);
+  if (i === -1) return { ok: false, reason: 'notfound' };
+
+  const clean = normalizeLabel(label);
+  try {
+    storage.setItem(KEY, JSON.stringify(list.map((r, j) => (j === i ? { ...r, label: clean } : r))));
+    return { ok: true, label: clean };
+  } catch (e) {
+    return { ok: false, reason: failureReason(e) };
+  }
+}
+
+/** Texto del cuadro para cambiar el nombre. 'row' es una fila de historyRows(). */
+export function labelPromptText(row) {
+  return `Nombre del mando para la prueba nº ${row.number} del ${row.dateTime}.\n\n` +
+         `Se aplica a los dos sticks de esa prueba. Déjalo en blanco para quitarlo (máximo ${MAX_LABEL} caracteres).`;
+}
+
+/** Texto para el usuario según lo que devolvió setLabelById(). */
+export function labelStatusText(res) {
+  if (res.ok) return res.label ? `Nombre del mando cambiado a «${res.label}».` : 'Nombre del mando quitado.';
+  if (res.reason === 'notfound') return 'No se encontró esa prueba: puede que ya se hubiera eliminado.';
+  if (res.reason === 'quota') return 'No se pudo cambiar el nombre: el almacenamiento del navegador está lleno.';
+  return 'No se pudo cambiar el nombre: el navegador bloquea el almacenamiento.';
 }
 
 /** Texto para el usuario según lo que devolvió removeById(). */
@@ -210,6 +259,7 @@ export function historyRows(results) {
           id: typeof r.id === 'string' ? r.id : null, // identifica la prueba (las dos filas de una prueba comparten id)
           side,                                       // 'left' | 'right' (para filtrar sin depender del texto)
           gamepad: typeof r.gamepad === 'string' ? r.gamepad : '',
+          label: typeof r.label === 'string' ? r.label : '',   // nombre personalizado (vacío en pruebas anteriores)          
           number: i + 1,                              // posición en el historial, igual que el orden del CSV
           dateTime: String(r.dateTime),
           stick: label,
@@ -260,7 +310,7 @@ export function filterRows(rows, f = DEFAULT_FILTERS) {
            (!f.level || f.level === 'all' || r.level === f.level) &&
            (!f.from || day >= f.from) &&
            (!f.to || day <= f.to) &&
-           (q === '' || fold(r.gamepad).includes(q));
+           (q === '' || fold(r.gamepad ?? '').includes(q) || fold(r.label ?? '').includes(q));
   });
 }
 
@@ -293,19 +343,55 @@ export function emptyStateText({ status = 'ok', stored = 0, tests = 0, filtering
 }
 
 /** Convierte una lista de resultados en texto CSV. */
+/** Texto entre comillas para CSV: las comillas interiores se duplican. */
+const quote = text => `"${String(text ?? '').replaceAll('"', '""')}"`;
+
 export function toCsv(results) {
-  const rows = results.map(r => {
+  // Los registros dañados o incompletos se omiten: uno malo no debe impedir exportar los demás
+  const rows = results.filter(isValidRecord).map(r => {
     // Las comillas dentro del nombre se duplican, como manda el formato CSV
-    const name = `"${String(r.gamepad).replaceAll('"', '""')}"`;
+    const name = quote(r.gamepad);
     return [
-      r.dateTime, r.durationSec, name, r.threshold.toFixed(3),
+      r.dateTime, Number.isFinite(r.durationSec) ? r.durationSec : '', name, r.threshold.toFixed(3),
       r.left.level, r.left.offset.toFixed(4), r.left.std.toFixed(4),
       r.left.above.toFixed(1), r.left.samples,
       r.right.level, r.right.offset.toFixed(4), r.right.std.toFixed(4),
       r.right.above.toFixed(1), r.right.samples,
+      quote(r.label),      
     ].join(',');
   });
   return [HEADER, ...rows].join('\n') + '\n';
+}
+
+/** ¿Se puede escribir este registro como fila de CSV? (fecha, umbral y los datos de ambos sticks) */
+export function isValidRecord(r) {
+  const stickOk = s => s !== null && typeof s === 'object' && typeof s.level === 'string' &&
+                       [s.offset, s.std, s.above, s.samples].every(Number.isFinite);
+  return r !== null && typeof r === 'object' && typeof r.dateTime === 'string' &&
+         Number.isFinite(r.threshold) && stickOk(r.left) && stickOk(r.right);
+}
+
+/** Nombre del CSV de una prueba. Empieza por "drift-resultados" para que lo ignore el .gitignore. */
+export function csvFileName(dateTime) {
+  const stamp = String(dateTime ?? '').replace(/[^0-9A-Za-z]+/g, '-').replace(/^-+|-+$/g, '');
+  return `drift-resultados-prueba-${stamp || 'sin-fecha'}.csv`;
+}
+
+/** Texto tras exportar UNA prueba. res: { ok: true, dateTime } o { ok: false, reason: 'notfound' | 'invalid' }. */
+export function exportStatusText(res) {
+  if (res.ok) return `CSV de la prueba del ${res.dateTime} generado.`;
+  if (res.reason === 'notfound') return 'No se encontró esa prueba: puede que ya se hubiera eliminado.';
+  return 'No se pudo exportar esa prueba: sus datos están dañados.';
+}
+
+/** Texto tras «Exportar CSV» (todas). total = guardadas, exported = las que entraron en el archivo. */
+export function exportAllText(total, exported) {
+  if (total === 0) return 'Aún no hay pruebas guardadas.';
+  if (exported === 0) return 'No se pudo exportar: ninguna prueba guardada tiene datos válidos.';
+  const plural = n => (n === 1 ? '1 prueba' : `${n} pruebas`);
+  const skipped = total - exported;
+  return (exported === 1 ? 'Descargada ' : 'Descargadas ') + plural(exported) + '.' +
+         (skipped > 0 ? ` Se omitieron ${plural(skipped)} con datos dañados.` : '');
 }
 
 /** Descarga el CSV como archivo. */

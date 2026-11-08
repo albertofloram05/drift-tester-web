@@ -557,12 +557,32 @@ export function renderHistoryTable(tbody, rows, emptyText = 'Aún no hay pruebas
     chip.textContent = VERDICT[r.level] ?? r.level;
     level.append(chip);
 
-    const pad = cell(r.gamepad || '—', 'gamepad');     // nombre largo: se recorta con CSS, el texto completo sigue en el DOM
-    pad.title = r.gamepad;    
+    // Se muestra el nombre personalizado si lo hay; si no, el del modelo. Largo: se recorta con CSS, el texto completo sigue en el DOM
+    const pad = cell(r.label || r.gamepad || '—', 'gamepad');
+    pad.title = r.label && r.gamepad ? `${r.label} — ${r.gamepad}` : (r.label || r.gamepad);    
 
     const actions = document.createElement('td');
     actions.className = 'actions';
     if (firstOfTest && r.id) {
+      const ren = document.createElement('button');
+      ren.type = 'button';
+      ren.className = 'btn row-rename';
+      ren.textContent = 'Nombre';
+      ren.dataset.action = 'rename';
+      ren.dataset.id = r.id;
+      ren.setAttribute('aria-label',
+        `Cambiar el nombre del mando de la prueba nº ${r.number} del ${r.dateTime} (afecta a los dos sticks)`);
+      actions.append(ren);      
+      const exp = document.createElement('button');
+      exp.type = 'button';
+      exp.className = 'btn row-export';
+      exp.textContent = 'CSV';
+      exp.dataset.action = 'export';
+      exp.dataset.id = r.id;
+      exp.setAttribute('aria-label',
+        `Exportar a CSV la prueba nº ${r.number} del ${r.dateTime} (los dos sticks)`);
+      actions.append(exp);
+
       const del = document.createElement('button');
       del.type = 'button';
       del.className = 'btn danger row-del';

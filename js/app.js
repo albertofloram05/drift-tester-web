@@ -10,7 +10,9 @@ import { drawStick, formatStats, formatMotion, setVerdict, drawGraph,
          updatePad, resetPadView, describePadDiagnostic, padNoteText, TRAIL_MS } from './render.js';
 import { buildResult, save, saveStatusText, count, clear, loadAll, storageStatus, downloadCsv,
          removeById, deleteConfirmText, deleteStatusText,
-         filterRows, hasActiveFilters, countTests, historyCountText, emptyStateText } from './history.js';
+         filterRows, hasActiveFilters, countTests, historyCountText, emptyStateText,
+         isValidRecord, csvFileName, exportStatusText, exportAllText,
+         normalizeLabel, setLabelById, labelStatusText, labelPromptText } from './history.js';
 import { DeadzoneAnalyzer, applyDeadzone } from './deadzone.js';
 import { formatDeadzone } from './render.js';
 import { historyRows } from './history.js';
@@ -27,6 +29,7 @@ let mode = 'static';          // 'static' | 'motion' | 'calibration' | 'buttons'
 let threshold = 0.05;
 let savedThisTest = true;     // evita guardar la misma prueba varias veces
 let testPadName = '';         // mando con el que se inició la prueba
+let testPadLabel = '';        // nombre personalizado que tenía el campo al iniciar la prueba
 
 const trailL = [];            // posiciones recientes de cada stick
 const trailR = [];
@@ -67,6 +70,7 @@ startBtn.addEventListener('click', () => {
     tester.stop();
   } else {
     testPadName = reader.name();
+    testPadLabel = normalizeLabel($('padLabel').value);   // se fija al empezar: cambiarlo durante la prueba no afecta
     savedThisTest = false;
     tester.start(performance.now());
   }
@@ -84,12 +88,51 @@ thresholdEl.addEventListener('input', () => {
 
 $('exportBtn').addEventListener('click', () => {
   const all = loadAll();
-  if (all.length === 0) {
-    showHistoryMsg('Aún no hay pruebas guardadas.');
+  const valid = all.filter(isValidRecord);          // las dañadas se omiten y se avisa de cuántas
+  if (valid.length > 0) downloadCsv(valid);
+  showHistoryMsg(exportAllText(all.length, valid.length));
+});
+
+// Cambiar el nombre del mando de UNA prueba (botón «Nombre» de su fila)
+historyBodyEl.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-action="rename"]');
+  if (!btn) return;
+
+  const row = historyRows(loadAll()).find(r => r.id === btn.dataset.id);
+  if (!row) {                                    // ya no existe (otra pestaña, por ejemplo)
+    showHistoryMsg(labelStatusText({ ok: false, reason: 'notfound' }));
+    refreshHistory();
     return;
   }
-  downloadCsv(all);
-  showHistoryMsg(`Descargadas ${all.length} pruebas.`);
+  const answer = prompt(labelPromptText(row), row.label);
+  if (answer === null) return;                   // canceló: no se cambia nada
+
+  const res = setLabelById(row.id, answer);
+  showHistoryMsg(labelStatusText(res));
+  refreshHistory();
+
+  // La tabla se repinta: el foco vuelve al botón de la misma prueba (o a «Exportar CSV» si un filtro la oculta)
+  (historyBodyEl.querySelector(`button[data-action="rename"][data-id="${CSS.escape(row.id)}"]`)
+    ?? $('exportBtn')).focus();
+});
+
+// Exportar UNA prueba a CSV (botón «CSV» de su fila; no afecta a los filtros ni a los datos)
+historyBodyEl.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-action="export"]');
+  if (!btn) return;
+
+  const record = loadAll().find(r => r?.id === btn.dataset.id);
+  if (!record) {
+    showHistoryMsg(exportStatusText({ ok: false, reason: 'notfound' }));
+    refreshHistory();
+    return;
+  }
+  if (!isValidRecord(record)) {
+    showHistoryMsg(exportStatusText({ ok: false, reason: 'invalid' }));
+    return;
+  }
+  downloadCsv([record], csvFileName(record.dateTime));
+  showHistoryMsg(exportStatusText({ ok: true, dateTime: record.dateTime }));
 });
 
 $('clearBtn').addEventListener('click', () => {
@@ -431,8 +474,8 @@ function autoSaveIfDone() {
   savedThisTest = true;
 
   const res = save(buildResult(
-    testPadName, tester.durationSec, threshold, tester.left, tester.right));
-  showHistoryMsg(saveStatusText(res));
+    testPadName, tester.durationSec, threshold, tester.left, tester.right, testPadLabel));
+  showHistoryMsg(saveStatusText(res, testPadLabel));
   refreshHistory();
 }
 
