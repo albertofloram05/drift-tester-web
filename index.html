@@ -289,6 +289,26 @@
       <p id="historyMsg" class="hint">
         El historial se guarda solo en este navegador. No se envía a ningún servidor.
       </p>
+
+      <div class="table-wrap">
+        <table id="historyTable" aria-label="Resultados de las pruebas estáticas">
+          <thead>
+            <tr>
+              <th scope="col" class="num">#</th>
+              <th scope="col">Fecha y hora</th>
+              <th scope="col">Stick</th>
+              <th scope="col" class="num">Muestras</th>
+              <th scope="col" class="num">Sesgo X</th>
+              <th scope="col" class="num">Sesgo Y</th>
+              <th scope="col" class="num">Desv. est.</th>
+              <th scope="col" class="num">% sobre umbral</th>
+              <th scope="col" class="num">Umbral</th>
+              <th scope="col">Resultado</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
     </section>
     <article class="card article" id="guia">
       <h2>¿Qué es el drift del DualSense y cómo comprobarlo?</h2>
