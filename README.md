@@ -103,7 +103,14 @@ Al mover el control o cambiar de stick las estadísticas empiezan de nuevo, porq
 
 ### Historial
 
-Cada prueba estática se guarda en el navegador (`localStorage`) y puede exportarse a **CSV**.
+Cada prueba estática se guarda en el navegador (`localStorage`) y se añade sola a una **tabla de resultados** que se actualiza al terminar la prueba, sin recargar la página. Además, el historial puede exportarse a **CSV**.
+
+- **Una fila por stick y prueba:** número, fecha y hora, stick, muestras, sesgo X, sesgo Y, desviación estándar, porcentaje de muestras sobre el umbral, umbral y resultado. La prueba más reciente aparece arriba.
+- **Mismos datos que el CSV:** la tabla lee el historial guardado y no recalcula nada, así que ambos coinciden. El número de prueba es su posición en el historial. El CSV no cambia de formato y no incluye el sesgo X e Y por separado.
+- **Persiste entre sesiones**, porque el historial vive en el navegador. «Borrar historial» vacía la tabla y el historial; reiniciar una medición no los toca.
+- En pantallas estrechas la tabla se desplaza en horizontal.
+
+Las pruebas guardadas antes de la v1.5.0 no tienen sesgo X e Y por separado y muestran una raya en esas dos columnas.
 
 ## Cómo usarla
 
@@ -172,6 +179,7 @@ La lógica (`stickStats`, `evaluator`, `driftTester`, `motionAnalyzer`, `calibra
 - **Umbrales:** comprobados de forma orientativa con cinco mandos (dos con síntomas) en una sola sesión; el detalle está en [docs/calibracion.md](docs/calibracion.md). Siguen sin ser un estándar y conviene repetir la prueba varias veces.
 - **Modo calibración:** la zona muerta sugerida (sesgo + 2,5 × ruido, mínimo 0,05), los límites de zona muerta «normal» y «alta» (0,10 y 0,25) y los de circularidad (0,90 y 0,80) son valores iniciales que no se han calibrado con una muestra de mandos. Tómalos como punto de partida; el detalle está en [docs/calibracion.md](docs/calibracion.md).
 - **Modo zona muerta:** es una simulación radial sobre las lecturas del navegador. Muchos juegos usan zonas muertas por ejes u otras curvas, así que el resultado en un juego concreto puede diferir. No corrige el centro del stick: el círculo está en el (0, 0) ideal. Si el stick no llega a 1 en su recorrido, la salida filtrada tampoco llegará a 1. Las estadísticas cuentan fotogramas con lectura, no informes únicos del mando.
+- **Tabla de resultados:** depende de `localStorage`. Si el navegador lo bloquea, la prueba no se guarda y la tabla queda vacía; la página lo avisa al terminar la prueba.
 - **Los porcentajes son aproximaciones** de los valores que reporta el mando, no medidas físicas del recorrido.
 - **La Gamepad API no garantiza una frecuencia de muestreo fija.** Las muestras se recogen en cada fotograma, así que dependen de la frecuencia de tu pantalla.
 - **El eje horizontal de la gráfica estática reparte muestras, no segundos.** La gráfica del modo movimiento sí usa tiempo real.
