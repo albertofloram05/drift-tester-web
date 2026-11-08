@@ -9,7 +9,8 @@ import { drawStick, formatStats, formatMotion, setVerdict, drawGraph,
          drawMotionGraph, setObservations, formatCalibration,
          updatePad, resetPadView, describePadDiagnostic, padNoteText, TRAIL_MS } from './render.js';
 import { buildResult, save, saveStatusText, count, clear, loadAll, storageStatus, downloadCsv,
-         removeById, deleteConfirmText, deleteStatusText } from './history.js';
+         removeById, deleteConfirmText, deleteStatusText,
+         filterRows, hasActiveFilters, countTests, historyCountText, emptyStateText } from './history.js';
 import { DeadzoneAnalyzer, applyDeadzone } from './deadzone.js';
 import { formatDeadzone } from './render.js';
 import { historyRows } from './history.js';
@@ -435,10 +436,45 @@ function autoSaveIfDone() {
   refreshHistory();
 }
 
-function refreshHistory() {
-  historyCountEl.textContent = `Pruebas guardadas: ${count()}`;
-  renderHistoryTable(historyBodyEl, historyRows(loadAll()));
+/** Valores actuales de los controles de filtro. */
+function readFilters() {
+  return {
+    stick: $('fStick').value,
+    level: $('fLevel').value,
+    from: $('fFrom').value,
+    to: $('fTo').value,
+    query: $('fQuery').value,
+  };
 }
+
+/** Repinta contador y tabla aplicando los filtros. Los datos guardados no se tocan. */
+function refreshHistory() {
+  const all = loadAll();
+  const rows = historyRows(all);
+  const filters = readFilters();
+  const filtering = hasActiveFilters(filters);
+  const shown = filterRows(rows, filters);
+
+  historyCountEl.textContent = historyCountText(all.length, filtering ? countTests(shown) : null);
+  renderHistoryTable(historyBodyEl, shown, emptyStateText({
+    status: storageStatus(), stored: all.length, tests: countTests(rows), filtering,
+  }));
+}
+
+// Filtros: se aplican al instante, sin recargar la página
+for (const id of ['fStick', 'fLevel', 'fFrom', 'fTo', 'fQuery']) {
+  $(id).addEventListener('input', refreshHistory);
+}
+
+$('fReset').addEventListener('click', () => {
+  $('fStick').value = 'all';
+  $('fLevel').value = 'all';
+  $('fFrom').value = '';
+  $('fTo').value = '';
+  $('fQuery').value = '';
+  refreshHistory();
+  showHistoryMsg('Filtros restablecidos.');
+});
 
 function showHistoryMsg(text) {
   historyMsgEl.textContent = text;

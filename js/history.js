@@ -207,7 +207,9 @@ export function historyRows(results) {
       const pair = [['left', 'Izquierdo'], ['right', 'Derecho']].map(([side, label]) => {
         const s = r[side];
         const row = {
-          id: typeof r.id === 'string' ? r.id : null, // identifica la prueba (las dos filas de una prueba comparten id)          
+          id: typeof r.id === 'string' ? r.id : null, // identifica la prueba (las dos filas de una prueba comparten id)
+          side,                                       // 'left' | 'right' (para filtrar sin depender del texto)
+          gamepad: typeof r.gamepad === 'string' ? r.gamepad : '',
           number: i + 1,                              // posición en el historial, igual que el orden del CSV
           dateTime: String(r.dateTime),
           stick: label,
@@ -229,6 +231,65 @@ export function historyRows(results) {
   }
 
   return rows;
+}
+
+// ---------- Filtros de la tabla (no tocan los datos guardados) ----------
+
+/** Filtros sin aplicar: la tabla muestra todo. */
+export const DEFAULT_FILTERS = Object.freeze({ stick: 'all', level: 'all', from: '', to: '', query: '' });
+
+/** Minúsculas y sin acentos, para que "Dualsénse" y "dualsense" coincidan. */
+const fold = s => String(s).normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+
+/** ¿Hay algún filtro puesto? Un texto de búsqueda con solo espacios no cuenta. */
+export function hasActiveFilters(f = DEFAULT_FILTERS) {
+  return Boolean((f.stick && f.stick !== 'all') || (f.level && f.level !== 'all') ||
+                 f.from || f.to || (f.query && f.query.trim() !== ''));
+}
+
+/**
+ * Filtra las filas de historyRows(). Los filtros se combinan (todos deben cumplirse).
+ * stick: 'left' | 'right' | 'all'; level: un Level o 'all'; from/to: 'AAAA-MM-DD' (inclusivos); query: nombre del mando.
+ * Devuelve una lista nueva: no modifica las filas ni el historial guardado.
+ */
+export function filterRows(rows, f = DEFAULT_FILTERS) {
+  const q = fold(f.query ?? '').trim();
+  return rows.filter(r => {
+    const day = r.dateTime.slice(0, 10);              // 'AAAA-MM-DD' de 'AAAA-MM-DD HH:MM:SS'
+    return (!f.stick || f.stick === 'all' || r.side === f.stick) &&
+           (!f.level || f.level === 'all' || r.level === f.level) &&
+           (!f.from || day >= f.from) &&
+           (!f.to || day <= f.to) &&
+           (q === '' || fold(r.gamepad).includes(q));
+  });
+}
+
+/** Número de pruebas distintas en una lista de filas (cada prueba tiene una fila por stick). */
+export function countTests(rows) {
+  return new Set(rows.map(r => r.id ?? `n${r.number}`)).size;
+}
+
+/** Texto del contador. 'matching' es null sin filtros, o cuántas pruebas coinciden con ellos. */
+export function historyCountText(total, matching = null) {
+  return `Pruebas guardadas: ${total}` +
+         (matching === null ? '' : ` · Coinciden con los filtros: ${matching}`);
+}
+
+/**
+ * Qué decir cuando la tabla no tiene filas. Distingue: almacenamiento bloqueado, datos dañados,
+ * historial vacío y "hay pruebas pero ningún filtro coincide".
+ * stored = elementos guardados; tests = pruebas legibles; filtering = hay filtros puestos.
+ */
+export function emptyStateText({ status = 'ok', stored = 0, tests = 0, filtering = false } = {}) {
+  if (status === 'unavailable') return 'El navegador bloquea el almacenamiento: no se puede mostrar el historial.';
+  if (status === 'corrupt') return 'No se puede leer el historial guardado: los datos están dañados.';
+  if (stored > 0 && tests === 0) return 'Las pruebas guardadas no se pueden mostrar: sus datos están dañados.';
+  if (tests === 0) return 'Aún no hay pruebas guardadas.';
+  if (filtering) {
+    const n = tests === 1 ? '1 prueba guardada' : `${tests} pruebas guardadas`;
+    return `Ninguna prueba coincide con los filtros. Hay ${n}: usa «Restablecer filtros» para verlas.`;
+  }
+  return 'Aún no hay pruebas guardadas.';
 }
 
 /** Convierte una lista de resultados en texto CSV. */

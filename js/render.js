@@ -519,15 +519,15 @@ function biasText(v) {
 }
 
 /** Pinta las filas de historyRows() en el <tbody>. Usa textContent: nada de innerHTML. */
-export function renderHistoryTable(tbody, rows) {
+export function renderHistoryTable(tbody, rows, emptyText = 'Aún no hay pruebas guardadas.') {
   tbody.replaceChildren();
 
   if (rows.length === 0) {
     const tr = document.createElement('tr');
     const td = document.createElement('td');
-    td.colSpan = 11;
+    td.colSpan = 12;
     td.className = 'empty';
-    td.textContent = 'Aún no hay pruebas guardadas.';
+    td.textContent = emptyText;
     tr.append(td);
     tbody.append(tr);
     return;
@@ -557,6 +557,9 @@ export function renderHistoryTable(tbody, rows) {
     chip.textContent = VERDICT[r.level] ?? r.level;
     level.append(chip);
 
+    const pad = cell(r.gamepad || '—', 'gamepad');     // nombre largo: se recorta con CSS, el texto completo sigue en el DOM
+    pad.title = r.gamepad;    
+
     const actions = document.createElement('td');
     actions.className = 'actions';
     if (firstOfTest && r.id) {
@@ -582,6 +585,7 @@ export function renderHistoryTable(tbody, rows) {
       cell(`${r.above.toFixed(1)} %`, 'num'),
       cell(r.threshold.toFixed(3), 'num'),
       level,
+      pad,
       actions,
     );
     tbody.append(tr);

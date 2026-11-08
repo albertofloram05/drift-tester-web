@@ -281,7 +281,7 @@
     </section>
 
     <section class="card panel history static-only">
-      <p id="historyCount">Pruebas guardadas: 0</p>
+      <p id="historyCount" role="status">Pruebas guardadas: 0</p>
       <div class="row">
         <button id="exportBtn" class="btn">Exportar CSV</button>
         <button id="clearBtn" class="btn danger">Borrar historial</button>
@@ -289,6 +289,34 @@
       <p id="historyMsg" class="hint">
         El historial se guarda solo en este navegador. No se envía a ningún servidor.
       </p>
+
+      <div class="filters" role="group" aria-label="Filtros del historial">
+        <label>Stick
+          <select id="fStick">
+            <option value="all" selected>Todos</option>
+            <option value="left">Izquierdo</option>
+            <option value="right">Derecho</option>
+          </select>
+        </label>
+        <label>Resultado
+          <select id="fLevel">
+            <option value="all" selected>Todos</option>
+            <option value="NORMAL">Normal</option>
+            <option value="POSSIBLE_DRIFT">Posible drift</option>
+            <option value="SIGNIFICANT_DRIFT">Drift significativo</option>
+          </select>
+        </label>
+        <label>Desde
+          <input id="fFrom" type="date">
+        </label>
+        <label>Hasta
+          <input id="fTo" type="date">
+        </label>
+        <label>Mando
+          <input id="fQuery" type="search" placeholder="Nombre del mando" autocomplete="off">
+        </label>
+        <button id="fReset" class="btn" type="button">Restablecer filtros</button>
+      </div>
 
       <div class="table-wrap">
         <table id="historyTable" aria-label="Resultados de las pruebas estáticas">
@@ -304,6 +332,7 @@
               <th scope="col" class="num">% sobre umbral</th>
               <th scope="col" class="num">Umbral</th>
               <th scope="col">Resultado</th>
+              <th scope="col">Mando</th>              
               <th scope="col">Acciones</th>              
             </tr>
           </thead>
