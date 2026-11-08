@@ -8,7 +8,7 @@ import { ButtonTracker } from './buttonTracker.js';
 import { drawStick, formatStats, formatMotion, setVerdict, drawGraph,
          drawMotionGraph, setObservations, formatCalibration,
          updatePad, resetPadView, describePadDiagnostic, padNoteText, TRAIL_MS } from './render.js';
-import { buildResult, save, count, clear, loadAll, downloadCsv } from './history.js';
+import { buildResult, save, saveStatusText, count, clear, loadAll, storageStatus, downloadCsv } from './history.js';
 import { DeadzoneAnalyzer, applyDeadzone } from './deadzone.js';
 import { formatDeadzone } from './render.js';
 import { historyRows } from './history.js';
@@ -91,11 +91,12 @@ $('exportBtn').addEventListener('click', () => {
 });
 
 $('clearBtn').addEventListener('click', () => {
-  if (count() === 0) return;
+  if (count() === 0 && storageStatus() === 'ok') return;   // si está dañado, sí se deja borrar
   if (!confirm('¿Borrar todo el historial? No se puede deshacer.')) return;
-  clear();
+  const ok = clear();
   refreshHistory();
-  showHistoryMsg('Historial borrado.');
+  showHistoryMsg(ok ? 'Historial borrado.'
+                    : 'No se pudo borrar el historial: el navegador bloquea el almacenamiento.');
 });
 
 $('modeStatic').addEventListener('click', () => setMode('static'));
@@ -404,10 +405,9 @@ function autoSaveIfDone() {
   if (tester.state !== State.DONE || savedThisTest) return;
   savedThisTest = true;
 
-  const ok = save(buildResult(
+  const res = save(buildResult(
     testPadName, tester.durationSec, threshold, tester.left, tester.right));
-  showHistoryMsg(ok ? 'Prueba guardada en el historial.'
-                    : 'No se pudo guardar: el navegador bloquea el almacenamiento.');
+  showHistoryMsg(saveStatusText(res));
   refreshHistory();
 }
 

@@ -1,6 +1,7 @@
 import { evaluate } from './evaluator.js';
 
 const KEY = 'driftTester.history.v1';   // nombre bajo el que se guarda
+const BACKUP_KEY = `${KEY}.corrupt`;     // copia del texto dañado, por si hay que recuperarlo a mano
 
 export const HEADER = [
   'fecha', 'duracion_s', 'mando', 'umbral',
@@ -30,9 +31,16 @@ function summarize(stats, threshold) {
   };
 }
 
+/** Identificador único de una prueba. randomUUID solo existe en contextos seguros (https o localhost). */
+function newId() {
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  return `t-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 /** Construye el resultado de una prueba a partir de las estadísticas. */
 export function buildResult(gamepad, durationSec, threshold, left, right) {
   return {
+    id: newId(),
     dateTime: nowText(),
     durationSec,
     gamepad,
@@ -42,33 +50,114 @@ export function buildResult(gamepad, durationSec, threshold, left, right) {
   };
 }
 
-/** Lee todo el historial. Si no hay nada o está dañado, devuelve una lista vacía. */
-export function loadAll() {
+/** Acceso a localStorage que no lanza aunque el navegador lo bloquee (devuelve null). */
+function defaultStorage() {
+  try { return globalThis.localStorage ?? null; } catch { return null; }
+}
+
+/**
+ * Da un id a cada registro que no lo tenga (los anteriores a la v1.5.1) y repara los repetidos.
+ * Es determinista (legacy-0, legacy-1...): mientras no se escriba nada, el mismo registro recibe el mismo id.
+ * Los elementos que no son objetos se dejan tal cual. No modifica la lista original.
+ */
+export function ensureIds(list) {
+  const seen = new Set();
+  return list.map((r, i) => {
+    if (r === null || typeof r !== 'object') return r;
+    let id = typeof r.id === 'string' && r.id !== '' && !seen.has(r.id) ? r.id : null;
+    if (id === null) {
+      id = `legacy-${i}`;
+      while (seen.has(id)) id += '_';
+    }
+    seen.add(id);
+    return r.id === id ? r : { ...r, id };
+  });
+}
+
+/** Lee el texto guardado. status: 'ok' (o vacío), 'corrupt' (JSON inválido) o 'unavailable' (sin acceso). */
+function readStored(storage) {
+  let raw;
   try {
-    const raw = localStorage.getItem(KEY);
-    const data = raw ? JSON.parse(raw) : [];
-    return Array.isArray(data) ? data : [];
+    raw = storage.getItem(KEY);
   } catch {
-    return [];
+    return { list: [], raw: null, status: 'unavailable' };
+  }
+  if (!raw) return { list: [], raw: null, status: 'ok' };
+  try {
+    const data = JSON.parse(raw);
+    if (Array.isArray(data)) return { list: ensureIds(data), raw, status: 'ok' };
+  } catch { /* se trata como dañado, abajo */ }
+  return { list: [], raw, status: 'corrupt' };
+}
+
+/** Lee todo el historial. Si no hay nada o está dañado, devuelve una lista vacía. */
+export function loadAll(storage = defaultStorage()) {
+  return readStored(storage).list;
+}
+
+/** Estado del almacenamiento: 'ok', 'corrupt' o 'unavailable'. Permite distinguir "vacío" de "dañado". */
+export function storageStatus(storage = defaultStorage()) {
+  return readStored(storage).status;
+}
+
+/** 'quota' si el navegador se quedó sin espacio; 'blocked' para cualquier otro fallo. */
+function failureReason(e) {
+  const quota = e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+                      e.code === 22 || e.code === 1014);
+  return quota ? 'quota' : 'blocked';
+}
+
+/**
+ * Añade un resultado. Devuelve { ok: true } si se guardó, { ok: true, duplicate: true } si ya estaba,
+ * o { ok: false, reason: 'quota' | 'blocked' | 'corrupt' } si no se pudo guardar.
+ * Si el historial guardado está dañado, primero se copia el texto a otra clave: nunca se pisa sin copia.
+ */
+export function save(result, storage = defaultStorage()) {
+  const { list, raw, status } = readStored(storage);
+  if (status === 'unavailable') return { ok: false, reason: 'blocked' };
+
+  if (status === 'corrupt') {
+    try {
+      if (storage.getItem(BACKUP_KEY) === null) storage.setItem(BACKUP_KEY, raw);
+    } catch {
+      return { ok: false, reason: 'corrupt' };   // sin copia de seguridad no se sobrescribe
+    }
+  }
+
+  if (result?.id && list.some(r => r?.id === result.id)) return { ok: true, duplicate: true };
+
+  try {
+    storage.setItem(KEY, JSON.stringify([...list, result]));
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, reason: failureReason(e) };
   }
 }
 
-/** Añade un resultado. Devuelve false si el navegador no deja guardar. */
-export function save(result) {
+/** Texto para el usuario según lo que devolvió save(). */
+export function saveStatusText(res) {
+  if (res.ok) return res.duplicate ? 'Esta prueba ya estaba guardada.' : 'Prueba guardada en el historial.';
+  switch (res.reason) {
+    case 'quota':
+      return 'No se pudo guardar: el almacenamiento del navegador está lleno. Exporta el CSV y borra pruebas antiguas.';
+    case 'corrupt':
+      return 'No se pudo guardar: el historial guardado está dañado y no se pudo hacer una copia. Bórralo para empezar de nuevo.';
+    default:
+      return 'No se pudo guardar: el navegador bloquea el almacenamiento.';
+  }
+}
+
+export function count(storage = defaultStorage()) { return loadAll(storage).length; }
+
+/** Borra el historial (y la copia de un historial dañado). Devuelve false si el navegador no lo permite. */
+export function clear(storage = defaultStorage()) {
   try {
-    const all = loadAll();
-    all.push(result);
-    localStorage.setItem(KEY, JSON.stringify(all));
+    storage.removeItem(KEY);
+    storage.removeItem(BACKUP_KEY);
     return true;
   } catch {
     return false;
   }
-}
-
-export function count() { return loadAll().length; }
-
-export function clear() {
-  try { localStorage.removeItem(KEY); } catch { /* sin acceso: nada que borrar */ }
 }
 
 /**
