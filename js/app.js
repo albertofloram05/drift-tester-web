@@ -11,6 +11,8 @@ import { drawStick, formatStats, formatMotion, setVerdict, drawGraph,
 import { buildResult, save, count, clear, loadAll, downloadCsv } from './history.js';
 import { DeadzoneAnalyzer, applyDeadzone } from './deadzone.js';
 import { formatDeadzone } from './render.js';
+import { historyRows } from './history.js';
+import { renderHistoryTable } from './render.js';
 
 const reader = new GamepadReader();
 const tester = new DriftTester();
@@ -36,6 +38,7 @@ const durationEl = $('duration');
 const thresholdEl = $('threshold');
 const historyCountEl = $('historyCount');
 const historyMsgEl = $('historyMsg');
+const historyBodyEl = $('historyBody');
 const helpEl = $('help');
 const calStatusEl = $('calStatus');
 const calStartBtn = $('calStartBtn');
@@ -410,6 +413,7 @@ function autoSaveIfDone() {
 
 function refreshHistory() {
   historyCountEl.textContent = `Pruebas guardadas: ${count()}`;
+  renderHistoryTable(historyBodyEl, historyRows(loadAll()));
 }
 
 function showHistoryMsg(text) {
