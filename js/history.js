@@ -22,6 +22,8 @@ function summarize(stats, threshold) {
   return {
     level: evaluate(stats, threshold),
     offset: stats.centerOffset,
+    meanX: stats.meanX,          // sesgo horizontal (solo para la tabla; el CSV no lo incluye)
+    meanY: stats.meanY,          // sesgo vertical
     std: stats.stdDev,
     above: stats.percentAboveThreshold(threshold),
     samples: stats.count,
@@ -67,6 +69,43 @@ export function count() { return loadAll().length; }
 
 export function clear() {
   try { localStorage.removeItem(KEY); } catch { /* sin acceso: nada que borrar */ }
+}
+
+/**
+ * Prepara las filas de la tabla del historial: una por stick y prueba, con la más reciente arriba.
+ * Usa los mismos resultados guardados que el CSV (no recalcula nada).
+ * Los registros anteriores a la v1.5.0 no tienen meanX/meanY: esas celdas quedan en null.
+ */
+export function historyRows(results) {
+  const rows = [];
+
+  for (let i = results.length - 1; i >= 0; i--) {
+    try {
+      const r = results[i];
+      const pair = [['left', 'Izquierdo'], ['right', 'Derecho']].map(([side, label]) => {
+        const s = r[side];
+        const row = {
+          number: i + 1,                              // posición en el historial, igual que el orden del CSV
+          dateTime: String(r.dateTime),
+          stick: label,
+          samples: s.samples,
+          meanX: Number.isFinite(s.meanX) ? s.meanX : null,
+          meanY: Number.isFinite(s.meanY) ? s.meanY : null,
+          std: s.std,
+          above: s.above,
+          threshold: r.threshold,
+          level: String(s.level),
+        };
+        for (const k of ['samples', 'std', 'above', 'threshold']) {
+          if (!Number.isFinite(row[k])) throw new Error('registro dañado');
+        }
+        return row;
+      });
+      rows.push(...pair);                             // se añaden los dos o ninguno
+    } catch { /* registro dañado: se omite */ }
+  }
+
+  return rows;
 }
 
 /** Convierte una lista de resultados en texto CSV. */
