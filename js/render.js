@@ -507,3 +507,61 @@ export function formatDeadzone(an, cur, out, d) {
   );
   return lines.join('\n');
 }
+
+
+
+// ---------- Tabla de resultados del modo estático ----------
+
+/** Sesgo con signo y 4 decimales (los mismos que el CSV). null se muestra como raya. */
+function biasText(v) {
+  if (v === null) return '—';
+  return (v > 0 ? '+' : '') + v.toFixed(4);
+}
+
+/** Pinta las filas de historyRows() en el <tbody>. Usa textContent: nada de innerHTML. */
+export function renderHistoryTable(tbody, rows) {
+  tbody.replaceChildren();
+
+  if (rows.length === 0) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 10;
+    td.className = 'empty';
+    td.textContent = 'Aún no hay pruebas guardadas.';
+    tr.append(td);
+    tbody.append(tr);
+    return;
+  }
+
+  for (const r of rows) {
+    const tr = document.createElement('tr');
+    if (r.stick === 'Izquierdo') tr.className = 'group-start';   // separa visualmente cada prueba
+
+    const cell = (text, className = '') => {
+      const td = document.createElement('td');
+      td.textContent = text;
+      if (className) td.className = className;
+      return td;
+    };
+
+    const level = document.createElement('td');
+    const chip = document.createElement('span');
+    chip.className = `hist-level ${r.level.toLowerCase()}`;
+    chip.textContent = VERDICT[r.level] ?? r.level;
+    level.append(chip);
+
+    tr.append(
+      cell(r.number, 'num'),
+      cell(r.dateTime),
+      cell(r.stick),
+      cell(r.samples, 'num'),
+      cell(biasText(r.meanX), 'num'),
+      cell(biasText(r.meanY), 'num'),
+      cell(r.std.toFixed(4), 'num'),
+      cell(`${r.above.toFixed(1)} %`, 'num'),
+      cell(r.threshold.toFixed(3), 'num'),
+      level,
+    );
+    tbody.append(tr);
+  }
+}
