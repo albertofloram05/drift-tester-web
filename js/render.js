@@ -525,7 +525,7 @@ export function renderHistoryTable(tbody, rows) {
   if (rows.length === 0) {
     const tr = document.createElement('tr');
     const td = document.createElement('td');
-    td.colSpan = 10;
+    td.colSpan = 11;
     td.className = 'empty';
     td.textContent = 'Aún no hay pruebas guardadas.';
     tr.append(td);
@@ -533,9 +533,16 @@ export function renderHistoryTable(tbody, rows) {
     return;
   }
 
+  let lastKey = null;
   for (const r of rows) {
     const tr = document.createElement('tr');
-    if (r.stick === 'Izquierdo') tr.className = 'group-start';   // separa visualmente cada prueba
+
+    // La primera fila visible de cada prueba lleva el separador y el botón de eliminar.
+    // Se decide por el id (no por el stick) para que siga bien si un filtro oculta una de las dos filas.
+    const key = r.id ?? `n${r.number}`;
+    const firstOfTest = key !== lastKey;
+    lastKey = key;
+    if (firstOfTest) tr.className = 'group-start';
 
     const cell = (text, className = '') => {
       const td = document.createElement('td');
@@ -550,6 +557,20 @@ export function renderHistoryTable(tbody, rows) {
     chip.textContent = VERDICT[r.level] ?? r.level;
     level.append(chip);
 
+    const actions = document.createElement('td');
+    actions.className = 'actions';
+    if (firstOfTest && r.id) {
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'btn danger row-del';
+      del.textContent = 'Eliminar';
+      del.dataset.action = 'delete';
+      del.dataset.id = r.id;
+      del.setAttribute('aria-label',
+        `Eliminar la prueba nº ${r.number} del ${r.dateTime} (borra los dos sticks)`);
+      actions.append(del);
+    }
+
     tr.append(
       cell(r.number, 'num'),
       cell(r.dateTime),
@@ -561,6 +582,7 @@ export function renderHistoryTable(tbody, rows) {
       cell(`${r.above.toFixed(1)} %`, 'num'),
       cell(r.threshold.toFixed(3), 'num'),
       level,
+      actions,
     );
     tbody.append(tr);
   }

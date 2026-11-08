@@ -147,6 +147,39 @@ export function saveStatusText(res) {
   }
 }
 
+/**
+ * Elimina UNA prueba (los dos sticks, que se guardan juntos) por su id.
+ * Devuelve { ok: true, removed } o { ok: false, reason: 'notfound' | 'quota' | 'blocked' }.
+ */
+export function removeById(id, storage = defaultStorage()) {
+  const { list, status } = readStored(storage);
+  if (status === 'unavailable') return { ok: false, reason: 'blocked' };
+
+  const i = list.findIndex(r => r?.id === id);
+  if (i === -1) return { ok: false, reason: 'notfound' };
+
+  const removed = list[i];
+  try {
+    storage.setItem(KEY, JSON.stringify(list.filter((_, j) => j !== i)));
+    return { ok: true, removed };
+  } catch (e) {
+    return { ok: false, reason: failureReason(e) };
+  }
+}
+
+/** Texto de la confirmación. 'row' es una fila de historyRows(); deja claro que se borran los dos sticks. */
+export function deleteConfirmText(row) {
+  return `¿Eliminar la prueba nº ${row.number} del ${row.dateTime}?\n\n` +
+         'Se borrarán los resultados de AMBOS sticks (izquierdo y derecho) de esa prueba. No se puede deshacer.';
+}
+
+/** Texto para el usuario según lo que devolvió removeById(). */
+export function deleteStatusText(res) {
+  if (res.ok) return `Prueba del ${res.removed.dateTime} eliminada (ambos sticks).`;
+  if (res.reason === 'notfound') return 'No se encontró esa prueba: puede que ya se hubiera eliminado.';
+  return 'No se pudo eliminar la prueba: el navegador bloquea el almacenamiento.';
+}
+
 export function count(storage = defaultStorage()) { return loadAll(storage).length; }
 
 /** Borra el historial (y la copia de un historial dañado). Devuelve false si el navegador no lo permite. */
@@ -174,6 +207,7 @@ export function historyRows(results) {
       const pair = [['left', 'Izquierdo'], ['right', 'Derecho']].map(([side, label]) => {
         const s = r[side];
         const row = {
+          id: typeof r.id === 'string' ? r.id : null, // identifica la prueba (las dos filas de una prueba comparten id)          
           number: i + 1,                              // posición en el historial, igual que el orden del CSV
           dateTime: String(r.dateTime),
           stick: label,

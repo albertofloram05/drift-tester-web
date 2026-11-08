@@ -8,7 +8,8 @@ import { ButtonTracker } from './buttonTracker.js';
 import { drawStick, formatStats, formatMotion, setVerdict, drawGraph,
          drawMotionGraph, setObservations, formatCalibration,
          updatePad, resetPadView, describePadDiagnostic, padNoteText, TRAIL_MS } from './render.js';
-import { buildResult, save, saveStatusText, count, clear, loadAll, storageStatus, downloadCsv } from './history.js';
+import { buildResult, save, saveStatusText, count, clear, loadAll, storageStatus, downloadCsv,
+         removeById, deleteConfirmText, deleteStatusText } from './history.js';
 import { DeadzoneAnalyzer, applyDeadzone } from './deadzone.js';
 import { formatDeadzone } from './render.js';
 import { historyRows } from './history.js';
@@ -97,6 +98,29 @@ $('clearBtn').addEventListener('click', () => {
   refreshHistory();
   showHistoryMsg(ok ? 'Historial borrado.'
                     : 'No se pudo borrar el historial: el navegador bloquea el almacenamiento.');
+});
+
+// Eliminar una prueba: un solo escuchador sobre la tabla (los botones se recrean al repintar)
+historyBodyEl.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-action="delete"]');
+  if (!btn) return;
+
+  const row = historyRows(loadAll()).find(r => r.id === btn.dataset.id);
+  if (!row) {                                    // ya no existe (otra pestaña, por ejemplo)
+    showHistoryMsg(deleteStatusText({ ok: false, reason: 'notfound' }));
+    refreshHistory();
+    return;
+  }
+  if (!confirm(deleteConfirmText(row))) return;
+
+  const position = [...historyBodyEl.querySelectorAll('button[data-action="delete"]')].indexOf(btn);
+  const res = removeById(row.id);
+  showHistoryMsg(deleteStatusText(res));
+  refreshHistory();
+
+  // El botón pulsado desaparece: se lleva el foco al siguiente (o al anterior, o a «Exportar CSV»)
+  const left = historyBodyEl.querySelectorAll('button[data-action="delete"]');
+  (left[Math.min(position, left.length - 1)] ?? $('exportBtn')).focus();
 });
 
 $('modeStatic').addEventListener('click', () => setMode('static'));

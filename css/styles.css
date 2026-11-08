@@ -810,6 +810,8 @@ select:disabled { opacity: 0.5; cursor: not-allowed; }
 #historyTable .num { text-align: right; font-family: var(--font-mono); }
 #historyTable tr.group-start td { border-top: 2px solid var(--border); }
 #historyTable td.empty { text-align: center; color: var(--muted); padding: 18px; }
+#historyTable td.actions { text-align: center; }
+#historyTable .row-del { padding: 4px 10px; font-size: 0.72rem; }
 
 .hist-level {
   display: inline-block;
