@@ -331,6 +331,12 @@
         <button id="fReset" class="btn" type="button">Restablecer filtros</button>
       </div>
 
+      <div class="compare-bar" role="group" aria-label="Selección para comparar">
+        <p id="compareCount" role="status">No hay filas seleccionadas para comparar.</p>
+        <button id="compareClearBtn" class="btn" type="button" disabled>Limpiar selección</button>
+      </div>
+      <p class="hint">Marca la casilla de cada fila que quieras comparar. Cada fila es un stick de una prueba.</p>
+
       <div class="table-wrap" role="region" aria-label="Historial de pruebas (se puede desplazar)" tabindex="0">
         <table id="historyTable" aria-label="Resultados de las pruebas estáticas">
           <thead>

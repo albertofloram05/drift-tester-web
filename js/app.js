@@ -17,6 +17,7 @@ import { DeadzoneAnalyzer, applyDeadzone } from './deadzone.js';
 import { formatDeadzone } from './render.js';
 import { historyRows } from './history.js';
 import { renderHistoryTable, VERDICT } from './render.js';
+import { toggleSelection, pruneSelection, selectionText, limitText } from './compare.js';
 import { connectionAnnouncement, testAnnouncement, calibrationAnnouncement, stickDescriptionId } from './a11y.js';
 
 const reader = new GamepadReader();
@@ -158,6 +159,8 @@ historyBodyEl.addEventListener('click', e => {
   const row = historyRows(loadAll()).find(r => r.id === btn.dataset.id);
   if (!row) {                                    // ya no existe (otra pestaña, por ejemplo)
     showHistoryMsg(deleteStatusText({ ok: false, reason: 'notfound' }));
+    // Los ids «legacy-N» dependen de la posición: al eliminar una prueba se desplazan, así que se sueltan
+    selected = selected.filter(k => !k.startsWith('legacy-'));    
     refreshHistory();
     return;
   }
@@ -522,6 +525,35 @@ function autoSaveIfDone() {
   refreshHistory();
 }
 
+// ---- Selección para comparar (v1.6.0) ----
+let selected = [];   // claves prueba|stick marcadas. Solo en memoria: no se guarda y los filtros no la cambian
+
+function updateCompareBar() {
+  $('compareCount').textContent = selectionText(selected.length);
+  $('compareClearBtn').disabled = selected.length === 0;
+}
+
+historyBodyEl.addEventListener('change', e => {
+  const box = e.target.closest('input[data-action="select"]');
+  if (!box) return;
+  const res = toggleSelection(selected, box.dataset.key);
+  if (!res.ok) {                                   // ya hay el máximo: se deshace la marca
+    box.checked = false;
+    showHistoryMsg(limitText());
+    return;
+  }
+  selected = res.keys;
+  box.closest('tr').classList.toggle('selected', box.checked);
+  updateCompareBar();
+});
+
+$('compareClearBtn').addEventListener('click', () => {
+  selected = [];
+  refreshHistory();
+  showHistoryMsg('Selección limpiada.');
+  $('exportBtn').focus();                          // el botón se desactiva: el foco no se pierde
+});
+
 /** Valores actuales de los controles de filtro. */
 function readFilters() {
   return {
@@ -537,6 +569,7 @@ function readFilters() {
 function refreshHistory() {
   const all = loadAll();
   const rows = historyRows(all);
+  selected = pruneSelection(selected, rows);      // quita lo que ya no existe (prueba eliminada, historial borrado) 
   const filters = readFilters();
   const filtering = hasActiveFilters(filters);
   const shown = filterRows(rows, filters);
@@ -544,7 +577,8 @@ function refreshHistory() {
   historyCountEl.textContent = historyCountText(all.length, filtering ? countTests(shown) : null);
   renderHistoryTable(historyBodyEl, shown, emptyStateText({
     status: storageStatus(), stored: all.length, tests: countTests(rows), filtering,
-  }));
+  }), selected);
+  updateCompareBar();
 }
 
 // Filtros: se aplican al instante, sin recargar la página

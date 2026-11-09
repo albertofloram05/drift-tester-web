@@ -8,6 +8,7 @@ function clearCanvas(ctx, canvas, dpr) {
 export const TRAIL_MS = 500;   // cuánto tiempo recordamos el recorrido
 import { MotionAnalyzer } from './motionAnalyzer.js';
 import { BUTTONS, labelOf } from './buttonTracker.js';
+import { rowKey } from './compare.js';
 
 /** Dibuja un stick en su canvas. x e y van de -1 a 1. */
 /** Dibuja un stick. 'stats' y 'sectors' pueden ser null según el modo. */
@@ -519,8 +520,9 @@ function biasText(v) {
 }
 
 /** Pinta las filas de historyRows() en el <tbody>. Usa textContent: nada de innerHTML. */
-export function renderHistoryTable(tbody, rows, emptyText = 'Aún no hay pruebas guardadas.') {
+export function renderHistoryTable(tbody, rows, emptyText = 'Aún no hay pruebas guardadas.', selected = []) {
   tbody.replaceChildren();
+  const chosen = new Set(selected);   // filas marcadas para comparar (clave prueba|stick)
 
   if (rows.length === 0) {
     const tr = document.createElement('tr');
@@ -594,8 +596,24 @@ export function renderHistoryTable(tbody, rows, emptyText = 'Aún no hay pruebas
       actions.append(del);
     }
 
+    // Primera celda: número de prueba y, si la fila se puede identificar, la casilla para compararla
+    const numCell = cell(r.number, 'num');
+    if (r.id && r.side) {
+      const selKey = rowKey(r.id, r.side);
+      const box = document.createElement('input');
+      box.type = 'checkbox';
+      box.className = 'row-select';
+      box.dataset.action = 'select';
+      box.dataset.key = selKey;
+      box.checked = chosen.has(selKey);
+      box.setAttribute('aria-label',
+        `Seleccionar para comparar: stick ${r.stick.toLowerCase()} de la prueba nº ${r.number} del ${r.dateTime}`);
+      numCell.prepend(box);
+      if (box.checked) tr.classList.add('selected');
+    }
+
     tr.append(
-      cell(r.number, 'num'),
+      numCell,
       cell(r.dateTime),
       cell(r.stick),
       cell(r.samples, 'num'),
