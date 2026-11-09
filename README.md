@@ -105,9 +105,13 @@ Al mover el control o cambiar de stick las estadísticas empiezan de nuevo, porq
 
 Cada prueba estática se guarda en el navegador (`localStorage`) y se añade sola a una **tabla de resultados** que se actualiza al terminar la prueba, sin recargar la página. Además, el historial puede exportarse a **CSV**.
 
-- **Una fila por stick y prueba:** número, fecha y hora, stick, muestras, sesgo X, sesgo Y, desviación estándar, porcentaje de muestras sobre el umbral, umbral y resultado. La prueba más reciente aparece arriba.
+- **Una fila por stick y prueba:** número, fecha y hora, stick, muestras, sesgo X, sesgo Y, desviación estándar, porcentaje de muestras sobre el umbral, umbral, resultado y mando. La prueba más reciente aparece arriba.
 - **Mismos datos que el CSV:** la tabla lee el historial guardado y no recalcula nada, así que ambos coinciden. El número de prueba es su posición en el historial. El CSV no cambia de formato y no incluye el sesgo X e Y por separado.
-- **Persiste entre sesiones**, porque el historial vive en el navegador. «Borrar historial» vacía la tabla y el historial; reiniciar una medición no los toca.
+- **Filtros combinables:** por stick, resultado, rango de fechas (desde/hasta) y nombre del mando. «Restablecer filtros» los quita todos. Si ningún resultado coincide, la tabla lo indica con un aviso.
+- **Nombre del mando:** puedes ponerle nombre (hasta 40 caracteres) al mando antes de la prueba, o cambiarlo después con el botón «Nombre» de la fila. Sirve para distinguir dos mandos del mismo modelo, que el navegador no reconoce por sí solo.
+- **Acciones por fila:** «Nombre», «CSV» (exporta solo esa prueba) y «Eliminar» (pide confirmación). La columna «Acciones» queda fija a la derecha al desplazar la tabla.
+- **Persiste entre sesiones**, porque el historial vive en el navegador. «Borrar historial» vacía la tabla y el historial (pide confirmación); reiniciar una medición no los toca. Si el navegador no permite guardar (modo privado, almacenamiento lleno), la página lo avisa en lugar de fallar en silencio.
+- **Accesibilidad:** los avisos de estado (contador y mensajes) se anuncian a lectores de pantalla, la tabla se puede desplazar con el teclado, el foco es visible y todos los campos tienen etiqueta.
 - En pantallas estrechas la tabla se desplaza en horizontal.
 
 Las pruebas guardadas antes de la v1.5.0 no tienen sesgo X e Y por separado y muestran una raya en esas dos columnas.
