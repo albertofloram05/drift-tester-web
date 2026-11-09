@@ -136,6 +136,25 @@ export function formatPct(d) {
   return (d.pct > 0 ? '+' : '') + d.pct.toFixed(1) + ' %';
 }
 
+// ---------- Textos del comparador ----------
+
+/** Resumen de lo que se está comparando. */
+export function summaryText(items) {
+  if (items.length < 2) return 'Selecciona al menos 2 filas del historial para compararlas.';
+  const tests = new Set(items.map(i => i.id)).size;
+  let t = `Comparando ${items.length} filas de ${tests === 1 ? '1 prueba' : `${tests} pruebas`}`;
+  const dated = items.filter(i => i.time !== null);
+  if (dated.length >= 2) t += `, del ${dated[0].dateTime} al ${dated[dated.length - 1].dateTime}`;
+  return t + '.';
+}
+
+/** Qué fila es la referencia de las diferencias. */
+export function referenceText(item) {
+  if (!item) return '';
+  return `Las diferencias se calculan respecto a la fila de referencia: stick ${item.stick.toLowerCase()}, ` +
+         `prueba nº ${item.number} (${item.dateTime}). Por defecto es la más antigua; puedes elegir otra.`;
+}
+
 // ---------- Avisos de interpretación ----------
 
 /** Frases neutrales sobre qué tan comparables son las filas. Lista vacía si no hay nada que avisar. */

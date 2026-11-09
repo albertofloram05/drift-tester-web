@@ -17,7 +17,9 @@ import { DeadzoneAnalyzer, applyDeadzone } from './deadzone.js';
 import { formatDeadzone } from './render.js';
 import { historyRows } from './history.js';
 import { renderHistoryTable, VERDICT } from './render.js';
-import { toggleSelection, pruneSelection, selectionText, limitText } from './compare.js';
+import { toggleSelection, pruneSelection, selectionText, limitText, buildItems, defaultReference, summaryText,
+         referenceText, relationText, comparabilityNotes, DISCLAIMER } from './compare.js';
+import { renderCompareTable, renderReferenceSelect, renderNotes } from './compareView.js';
 import { connectionAnnouncement, testAnnouncement, calibrationAnnouncement, stickDescriptionId } from './a11y.js';
 
 const reader = new GamepadReader();
@@ -531,6 +533,8 @@ let selected = [];   // claves prueba|stick marcadas. Solo en memoria: no se gua
 function updateCompareBar() {
   $('compareCount').textContent = selectionText(selected.length);
   $('compareClearBtn').disabled = selected.length === 0;
+  $('compareOpenBtn').disabled = selected.length < 2;
+  renderComparator();                              // si el panel está abierto, se pone al día
 }
 
 historyBodyEl.addEventListener('change', e => {
@@ -554,6 +558,47 @@ $('compareClearBtn').addEventListener('click', () => {
   $('exportBtn').focus();                          // el botón se desactiva: el foco no se pierde
 });
 
+// ---- Comparador (v1.6.0) ----
+let compareOpen = false;
+let compareRef = null;   // clave de la fila de referencia (null: la más antigua)
+let allRows = [];        // filas de historyRows() sin filtrar
+
+function renderComparator() {
+  $('comparePanel').hidden = !compareOpen;
+  if (!compareOpen) return;
+
+  const items = buildItems(selected, allRows);
+  const ready = items.length >= 2;
+  $('compareSummary').textContent = summaryText(items);
+  $('compareBody').hidden = !ready;
+  if (!ready) return;
+
+  if (!items.some(i => i.key === compareRef)) compareRef = defaultReference(items);
+  renderReferenceSelect($('compareRef'), items, compareRef);
+  $('compareRefText').textContent = referenceText(items.find(i => i.key === compareRef));
+  $('compareRelation').textContent = relationText(items);
+  renderNotes($('compareNotes'), comparabilityNotes(items));
+  renderCompareTable($('compareTableBody'), items, compareRef);
+  $('compareDisclaimer').textContent = DISCLAIMER;
+}
+
+$('compareOpenBtn').addEventListener('click', () => {
+  compareOpen = true;
+  renderComparator();
+  $('compareTitle').focus();
+});
+
+$('compareCloseBtn').addEventListener('click', () => {
+  compareOpen = false;
+  renderComparator();
+  ($('compareOpenBtn').disabled ? $('exportBtn') : $('compareOpenBtn')).focus();
+});
+
+$('compareRef').addEventListener('change', e => {
+  compareRef = e.target.value;
+  renderComparator();
+});
+
 /** Valores actuales de los controles de filtro. */
 function readFilters() {
   return {
@@ -569,7 +614,8 @@ function readFilters() {
 function refreshHistory() {
   const all = loadAll();
   const rows = historyRows(all);
-  selected = pruneSelection(selected, rows);      // quita lo que ya no existe (prueba eliminada, historial borrado) 
+  selected = pruneSelection(selected, rows);      // quita lo que ya no existe (prueba eliminada, historial borrado)
+  allRows = rows;                                 // el comparador resuelve la selección contra todas las filas, sin filtrar   
   const filters = readFilters();
   const filtering = hasActiveFilters(filters);
   const shown = filterRows(rows, filters);

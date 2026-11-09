@@ -333,6 +333,7 @@
 
       <div class="compare-bar" role="group" aria-label="Selección para comparar">
         <p id="compareCount" role="status">No hay filas seleccionadas para comparar.</p>
+        <button id="compareOpenBtn" class="btn primary" type="button" disabled>Abrir comparador</button>
         <button id="compareClearBtn" class="btn" type="button" disabled>Limpiar selección</button>
       </div>
       <p class="hint">Marca la casilla de cada fila que quieras comparar. Cada fila es un stick de una prueba.</p>
@@ -359,6 +360,44 @@
         </table>
       </div>
     </section>
+
+    <section id="comparePanel" class="card panel compare static-only" aria-labelledby="compareTitle" hidden>
+      <h2 id="compareTitle" tabindex="-1">Comparación de pruebas</h2>
+      <p id="compareSummary" role="status"></p>
+      <div id="compareBody">
+        <p id="compareRelation" class="hint"></p>
+        <div class="compare-ref">
+          <label for="compareRef">Referencia para las diferencias</label>
+          <select id="compareRef"></select>
+        </div>
+        <p id="compareRefText" class="hint"></p>
+        <ul id="compareNotes" class="compare-notes"></ul>
+        <div class="table-wrap" role="region" aria-label="Tabla comparativa (se puede desplazar)" tabindex="0">
+          <table id="compareTable" aria-label="Comparación de las filas seleccionadas">
+            <thead>
+              <tr>
+                <th scope="col">Fecha y hora</th>
+                <th scope="col">Stick</th>
+                <th scope="col">Mando</th>
+                <th scope="col" class="num">Umbral</th>
+                <th scope="col">Resultado</th>
+                <th scope="col" class="num">Sesgo X</th>
+                <th scope="col" class="num">Sesgo Y</th>
+                <th scope="col" class="num">Desv. est.</th>
+                <th scope="col" class="num">% sobre umbral</th>
+                <th scope="col" class="num">Muestras</th>
+              </tr>
+            </thead>
+            <tbody id="compareTableBody"></tbody>
+          </table>
+        </div>
+        <p id="compareDisclaimer" class="hint"></p>
+      </div>
+      <div class="row">
+        <button id="compareCloseBtn" class="btn" type="button">Cerrar comparador</button>
+      </div>
+    </section>
+    
     <article class="card article" id="guia">
       <h2>¿Qué es el drift del DualSense y cómo comprobarlo?</h2>
 
