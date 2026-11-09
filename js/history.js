@@ -259,7 +259,8 @@ export function historyRows(results) {
           id: typeof r.id === 'string' ? r.id : null, // identifica la prueba (las dos filas de una prueba comparten id)
           side,                                       // 'left' | 'right' (para filtrar sin depender del texto)
           gamepad: typeof r.gamepad === 'string' ? r.gamepad : '',
-          label: typeof r.label === 'string' ? r.label : '',   // nombre personalizado (vacío en pruebas anteriores)          
+          label: typeof r.label === 'string' ? r.label : '',   // nombre personalizado (vacío en pruebas anteriores) 
+          durationSec: Number.isFinite(r.durationSec) ? r.durationSec : null,   // NUEVO (v1.6.0)         
           number: i + 1,                              // posición en el historial, igual que el orden del CSV
           dateTime: String(r.dateTime),
           stick: label,
@@ -344,7 +345,7 @@ export function emptyStateText({ status = 'ok', stored = 0, tests = 0, filtering
 
 /** Convierte una lista de resultados en texto CSV. */
 /** Texto entre comillas para CSV: las comillas interiores se duplican. */
-const quote = text => `"${String(text ?? '').replaceAll('"', '""')}"`;
+export const quote = text => `"${String(text ?? '').replaceAll('"', '""')}"`;
 
 export function toCsv(results) {
   // Los registros dañados o incompletos se omiten: uno malo no debe impedir exportar los demás
