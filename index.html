@@ -27,16 +27,18 @@
   <link rel="apple-touch-icon" href="/favicon.png">
 </head>
 <body data-mode="static">
+  <!-- Avisos para lectores de pantalla: solo cambios de estado, no valores que cambian en cada fotograma -->
+  <div id="a11yStatus" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
   <header class="app-header">
     <h1>DualSense <span>Drift Tester</span></h1>
     <p id="connection" class="badge">Sin mando</p>
 
     <div class="mode-switch" role="group" aria-label="Modo de prueba">
-      <button id="modeStatic" class="mode-btn active" type="button">Modo estático</button>
-      <button id="modeMotion" class="mode-btn" type="button">Modo movimiento</button>
-      <button id="modeCalibration" class="mode-btn" type="button">Modo calibración</button>
-      <button id="modeButtons" class="mode-btn" type="button">Modo botones</button>
-      <button id="modeDeadzone" class="mode-btn" type="button">Modo zona muerta</button>         
+      <button id="modeStatic" class="mode-btn active" type="button" aria-pressed="true">Modo estático</button>
+      <button id="modeMotion" class="mode-btn" type="button" aria-pressed="false">Modo movimiento</button>
+      <button id="modeCalibration" class="mode-btn" type="button" aria-pressed="false">Modo calibración</button>
+      <button id="modeButtons" class="mode-btn" type="button" aria-pressed="false">Modo botones</button>
+      <button id="modeDeadzone" class="mode-btn" type="button" aria-pressed="false">Modo zona muerta</button>         
     </div>
   </header>
 
@@ -58,17 +60,20 @@
     <div id="sticks">
       <section class="card">
         <h2>Stick izquierdo</h2>
-        <canvas id="canvasL" width="300" height="300"></canvas>
+        <canvas id="canvasL" width="300" height="300" role="img"
+                aria-label="Posición del stick izquierdo" aria-describedby="statsL"></canvas>
 
         <pre id="statsL" class="static-only"></pre>
         <p class="graph-title static-only">Desviación en el tiempo <span id="scaleL"></span></p>
-        <canvas id="graphL" class="graph static-only" width="340" height="120"></canvas>
+        <canvas id="graphL" class="graph static-only" width="340" height="120" role="img"
+                aria-label="Gráfica de la distancia al centro del stick izquierdo durante la prueba"></canvas>
         <p id="verdictL" class="verdict static-only" hidden></p>
 
         <pre id="motionL" class="motion-only"></pre>
         <p class="graph-title motion-only">X e Y · últimos 10 s
           <span class="legend"><i class="dot x"></i>X <i class="dot y"></i>Y</span></p>
-        <canvas id="motionGraphL" class="graph motion-only" width="340" height="120"></canvas>
+        <canvas id="motionGraphL" class="graph motion-only" width="340" height="120" role="img"
+                aria-label="Gráfica de las posiciones X e Y del stick izquierdo en los últimos 10 segundos"></canvas>
         <ul id="obsL" class="observations motion-only"></ul>
         <pre id="calL" class="calibration-only"></pre>
         <ul id="calObsL" class="observations calibration-only"></ul>        
@@ -76,17 +81,20 @@
 
       <section class="card">
         <h2>Stick derecho</h2>
-        <canvas id="canvasR" width="300" height="300"></canvas>
+        <canvas id="canvasR" width="300" height="300" role="img"
+              aria-label="Posición del stick derecho" aria-describedby="statsR"></canvas>
 
         <pre id="statsR" class="static-only"></pre>
         <p class="graph-title static-only">Desviación en el tiempo <span id="scaleR"></span></p>
-        <canvas id="graphR" class="graph static-only" width="340" height="120"></canvas>
+        <canvas id="graphR" class="graph static-only" width="340" height="120" role="img"
+                aria-label="Gráfica de la distancia al centro del stick derecho durante la prueba"></canvas>
         <p id="verdictR" class="verdict static-only" hidden></p>
 
         <pre id="motionR" class="motion-only"></pre>
         <p class="graph-title motion-only">X e Y · últimos 10 s
           <span class="legend"><i class="dot x"></i>X <i class="dot y"></i>Y</span></p>
-        <canvas id="motionGraphR" class="graph motion-only" width="340" height="120"></canvas>
+        <canvas id="motionGraphR" class="graph motion-only" width="340" height="120" role="img"
+                aria-label="Gráfica de las posiciones X e Y del stick derecho en los últimos 10 segundos"></canvas>
         <ul id="obsR" class="observations motion-only"></ul>
         <pre id="calR" class="calibration-only"></pre>
         <ul id="calObsR" class="observations calibration-only"></ul>        
@@ -238,7 +246,7 @@
         </label>
       </div>
 
-      <canvas id="canvasDz" width="300" height="300"
+      <canvas id="canvasDz" width="300" height="300" role="img"
               aria-label="Stick con la zona muerta simulada: punto blanco original, punto verde filtrado"></canvas>
       <p class="legend-line">
         <i class="dot x"></i>Original <i class="dot ok"></i>Filtrado <i class="dot dz"></i>Zona muerta
@@ -291,7 +299,7 @@
         <button id="exportBtn" class="btn">Exportar CSV</button>
         <button id="clearBtn" class="btn danger">Borrar historial</button>
       </div>
-      <p id="historyMsg" class="hint">
+      <p id="historyMsg" class="hint" role="status">
         El historial se guarda solo en este navegador. No se envía a ningún servidor.
       </p>
 
@@ -323,7 +331,7 @@
         <button id="fReset" class="btn" type="button">Restablecer filtros</button>
       </div>
 
-      <div class="table-wrap">
+      <div class="table-wrap" role="region" aria-label="Historial de pruebas (se puede desplazar)" tabindex="0"></div>
         <table id="historyTable" aria-label="Resultados de las pruebas estáticas">
           <thead>
             <tr>

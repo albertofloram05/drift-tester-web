@@ -121,7 +121,7 @@ export function drawStick(canvas, x, y, stats, trail, now, sectors = null, overl
 /** Número con signo y tres decimales: +0.012, -0.004 */
 const sgn = v => (v >= 0 ? '+' : '') + v.toFixed(3);
 
-const VERDICT = {
+export const VERDICT = {
   NORMAL: 'NORMAL',
   POSSIBLE_DRIFT: 'POSIBLE DRIFT',
   SIGNIFICANT_DRIFT: 'DRIFT SIGNIFICATIVO',

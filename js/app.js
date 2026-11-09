@@ -16,7 +16,8 @@ import { buildResult, save, saveStatusText, count, clear, loadAll, storageStatus
 import { DeadzoneAnalyzer, applyDeadzone } from './deadzone.js';
 import { formatDeadzone } from './render.js';
 import { historyRows } from './history.js';
-import { renderHistoryTable } from './render.js';
+import { renderHistoryTable, VERDICT } from './render.js';
+import { connectionAnnouncement, testAnnouncement, calibrationAnnouncement, stickDescriptionId } from './a11y.js';
 
 const reader = new GamepadReader();
 const tester = new DriftTester();
@@ -51,6 +52,11 @@ const calBarEl = $('calBar');
 const calStepEls = document.querySelectorAll('#calSteps li');
 const padNoteEl = $('padNote');
 const padDiagEl = $('padDiag');
+const a11yEl = $('a11yStatus');   // región aria-live: solo recibe avisos de cambios de estado
+
+let lastConnected = null;         // para anunciar solo cuando cambia
+let lastTestState = tester.state;
+let lastCalState = wizard.state;
 
 // ---- Modo zona muerta ----
 const dzStats = new DeadzoneAnalyzer();
@@ -214,15 +220,51 @@ function setMode(newMode) {
 
   mode = newMode;
   document.body.dataset.mode = mode;     // el CSS muestra u oculta según este atributo
-  $('modeStatic').classList.toggle('active', mode === 'static');
-  $('modeMotion').classList.toggle('active', mode === 'motion');
-  $('modeCalibration').classList.toggle('active', mode === 'calibration');
-  $('modeButtons').classList.toggle('active', mode === 'buttons');
-  $('modeDeadzone').classList.toggle('active', mode === 'deadzone');  
+  markMode('modeStatic', mode === 'static');
+  markMode('modeMotion', mode === 'motion');
+  markMode('modeCalibration', mode === 'calibration');
+  markMode('modeButtons', mode === 'buttons');
+  markMode('modeDeadzone', mode === 'deadzone');
+  for (const side of ['L', 'R']) {      // cada modo describe el stick con un texto distinto
+    $(`canvas${side}`).setAttribute('aria-describedby', stickDescriptionId(mode, side));
+  }  
   resetMotion();
   wizard.reset();
   clearButtons();
   resetDeadzone();
+}
+
+/** Marca un botón de modo como activo (aspecto) y como pulsado (lectores de pantalla). */
+function markMode(id, active) {
+  const btn = $(id);
+  btn.classList.toggle('active', active);
+  btn.setAttribute('aria-pressed', String(active));
+}
+
+/** Avisa al lector de pantalla. Si no hay texto, no hace nada. */
+function announce(text) {
+  if (text) a11yEl.textContent = text;
+}
+
+/** Anuncia los cambios de conexión, de prueba y de calibración (nunca valores que cambian en cada fotograma). */
+function announceChanges(connected) {
+  announce(connectionAnnouncement(lastConnected, connected, reader.name()));
+  lastConnected = connected;
+
+  if (tester.state !== lastTestState) {
+    const done = tester.state === State.DONE;
+    announce(testAnnouncement(lastTestState, tester.state, {
+      durationSec: tester.durationSec,
+      left: done ? VERDICT[evaluate(tester.left, threshold)] : '',
+      right: done ? VERDICT[evaluate(tester.right, threshold)] : '',
+    }));
+    lastTestState = tester.state;
+  }
+
+  if (wizard.state !== lastCalState) {
+    announce(calibrationAnnouncement(lastCalState, wizard.state));
+    lastCalState = wizard.state;
+  }
 }
 
 function clearButtons() {
@@ -308,6 +350,7 @@ function frame(now) {
   }
 
   updateUi(now, connected);
+  announceChanges(connected);
   autoSaveIfDone();
 
   const cur = {

@@ -39,6 +39,7 @@
   --text: #e6e9ef;
   --muted: #8b94a7;
   --blue: #3b82f6;
+  --blue-strong: #2563eb;        /* fondo de botones con texto blanco: 5,2:1 (el --blue daba 3,7:1, por debajo de AA) */
   --green: #22c55e;
   --orange: #f59e0b;
   --red: #ef4444;
@@ -255,9 +256,25 @@ select, input[type="number"], input[type="date"], input[type="search"], input[ty
   min-width: 90px;
 }
 
-select:focus, input:focus {
-  outline: none;
-  border-color: var(--blue);
+select:focus, input:focus { border-color: var(--blue); }
+
+/* Foco visible para quien navega con teclado (con el ratón no aparece en los botones) */
+:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+/* Texto solo para lectores de pantalla: existe en la página pero no se ve */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 select:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -283,14 +300,14 @@ select:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn:active:not(:disabled) { transform: scale(0.97); }
 
 .btn.primary {
-  background: var(--blue);
-  border-color: var(--blue);
+  background: var(--blue-strong);
+  border-color: var(--blue-strong);
   color: #fff;
 }
 
 .btn.primary:hover:not(:disabled) {
-  background: #2563eb;
-  border-color: #2563eb;
+  background: #1d4ed8;
+  border-color: #1d4ed8;
 }
 
 .btn:disabled {
@@ -379,7 +396,7 @@ select:disabled { opacity: 0.5; cursor: not-allowed; }
 .mode-btn:hover { color: var(--text); }
 
 .mode-btn.active {
-  background: var(--blue);
+  background: var(--blue-strong);
   color: #fff;
 }
 
