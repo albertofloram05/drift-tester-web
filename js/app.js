@@ -8,7 +8,7 @@ import { ButtonTracker } from './buttonTracker.js';
 import { drawStick, formatStats, formatMotion, setVerdict, drawGraph,
          drawMotionGraph, setObservations, formatCalibration,
          updatePad, resetPadView, describePadDiagnostic, padNoteText, TRAIL_MS } from './render.js';
-import { buildResult, save, saveStatusText, count, clear, loadAll, storageStatus, downloadCsv,
+import { buildResult, save, saveStatusText, count, clear, loadAll, storageStatus, downloadCsv, downloadText,
          removeById, deleteConfirmText, deleteStatusText,
          filterRows, hasActiveFilters, countTests, historyCountText, emptyStateText,
          isValidRecord, csvFileName, exportStatusText, exportAllText,
@@ -18,7 +18,8 @@ import { formatDeadzone } from './render.js';
 import { historyRows } from './history.js';
 import { renderHistoryTable, VERDICT } from './render.js';
 import { toggleSelection, pruneSelection, selectionText, limitText, buildItems, defaultReference, summaryText,
-         referenceText, relationText, comparabilityNotes, DISCLAIMER } from './compare.js';
+         referenceText, relationText, comparabilityNotes, DISCLAIMER, compareToCsv, compareCsvFileName,
+         compareExportText } from './compare.js';
 import { renderCompareTable, renderReferenceSelect, renderNotes, renderChart } from './compareView.js';
 import { connectionAnnouncement, testAnnouncement, calibrationAnnouncement, stickDescriptionId } from './a11y.js';
 
@@ -568,6 +569,7 @@ let chartWidth = 0;      // ancho con el que se dibujaron las gráficas
 function renderComparator() {
   $('comparePanel').hidden = !compareOpen;
   if (!compareOpen) return;
+  $('compareMsg').textContent = ''; // un aviso de exportación no debe sobrevivir a un cambio de selección  
 
   const items = buildItems(selected, allRows);
   const ready = items.length >= 2;
@@ -598,6 +600,13 @@ $('compareCloseBtn').addEventListener('click', () => {
   compareOpen = false;
   renderComparator();
   ($('compareOpenBtn').disabled ? $('exportBtn') : $('compareOpenBtn')).focus();
+});
+
+$('compareExportBtn').addEventListener('click', () => {
+  const items = buildItems(selected, allRows);
+  const ref = items.find(i => i.key === compareRef) ?? items[0];
+  if (items.length >= 2) downloadText(compareToCsv(items, ref.key), compareCsvFileName(items));
+  $('compareMsg').textContent = compareExportText(items.length, ref);
 });
 
 $('compareRef').addEventListener('change', e => {

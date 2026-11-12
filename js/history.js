@@ -395,10 +395,10 @@ export function exportAllText(total, exported) {
          (skipped > 0 ? ` Se omitieron ${plural(skipped)} con datos dañados.` : '');
 }
 
-/** Descarga el CSV como archivo. */
-export function downloadCsv(results, filename = 'drift-resultados.csv') {
+/** Descarga un texto CSV como archivo. */
+export function downloadText(text, filename) {
   // El \uFEFF inicial ayuda a Excel a reconocer los acentos (UTF-8)
-  const blob = new Blob(['\uFEFF' + toCsv(results)], { type: 'text/csv;charset=utf-8' });
+  const blob = new Blob(['\uFEFF' + text], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
 
   const a = document.createElement('a');
@@ -407,8 +407,13 @@ export function downloadCsv(results, filename = 'drift-resultados.csv') {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  
+
   setTimeout(() => {
     URL.revokeObjectURL(url);
   }, 1000);
+}
+
+/** Descarga el historial (o las pruebas que se le pasen) como CSV. */
+export function downloadCsv(results, filename = 'drift-resultados.csv') {
+  downloadText(toCsv(results), filename);
 }

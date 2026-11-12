@@ -302,6 +302,13 @@ export function compareToCsv(items, refKey) {
   return [COMPARE_HEADER, ...rows].join('\n') + '\n';
 }
 
+/** Texto de estado tras pulsar «Exportar comparación». */
+export function compareExportText(n, ref) {
+  if (n < 2 || !ref) return 'No se puede exportar: selecciona al menos 2 filas para comparar.';
+  return `Comparación exportada: ${n} filas, con las diferencias calculadas respecto a la referencia ` +
+         `(stick ${ref.stick.toLowerCase()}, prueba nº ${ref.number}).`;
+}
+
 export function compareCsvFileName(items) {
   return `drift-resultados-comparacion-${items.length}-filas.csv`;   // empieza por «drift-resultados»: lo ignora el .gitignore
 }
