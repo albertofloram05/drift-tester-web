@@ -116,6 +116,12 @@ Cada prueba estática se guarda en el navegador (`localStorage`) y se añade sol
 
 Las pruebas guardadas antes de la v1.5.0 no tienen sesgo X e Y por separado y muestran una raya en esas dos columnas.
 
+### Comparación de pruebas
+
+Marca varias filas del historial (cada una es un stick de una prueba, hasta 8) y pulsa **Abrir comparador** para verlas lado a lado: tabla con la diferencia de cada métrica respecto a una **referencia** que eliges, **gráficas de evolución** por stick y **exportación a CSV**. No hace mediciones nuevas y funciona con el mando desconectado.
+
+Es una herramienta **descriptiva**: una variación entre pruebas no demuestra por sí sola que el drift haya aparecido o cambiado, porque las lecturas dependen de cómo sueltas el stick, la conexión o el ruido de medición. El detalle de cómo se calcula cada diferencia y de las columnas del CSV está en [docs/comparacion.md](docs/comparacion.md).
+
 ## Cómo usarla
 
 1. Conecta el mando por **USB** (con un cable que transmita datos) o por **Bluetooth**.
@@ -162,10 +168,13 @@ drift-tester-web/
 │   ├── deadzone.js           # zona muerta radial y estadísticas del modo zona muerta
 │   ├── buttonTracker.js      # tabla de botones y registro de pulsaciones
 │   ├── history.js            # historial (localStorage) y exportación CSV
+│   ├── compare.js            # lógica de la comparación (selección, diferencias, series y CSV)
+│   ├── compareView.js        # tabla y gráficas SVG del comparador
 │   ├── level.js              # niveles del veredicto
 │   └── render.js             # dibujo en canvas y formato de textos
 ├── fonts/                    # tipografías, servidas desde el propio sitio
 └── docs/
+    ├── comparacion.md
     ├── calibracion.md
     ├── zona-muerta.md    
     ├── modo-estatico.png
@@ -184,6 +193,7 @@ La lógica (`stickStats`, `evaluator`, `driftTester`, `motionAnalyzer`, `calibra
 - **Modo calibración:** la zona muerta sugerida (sesgo + 2,5 × ruido, mínimo 0,05), los límites de zona muerta «normal» y «alta» (0,10 y 0,25) y los de circularidad (0,90 y 0,80) son valores iniciales que no se han calibrado con una muestra de mandos. Tómalos como punto de partida; el detalle está en [docs/calibracion.md](docs/calibracion.md).
 - **Modo zona muerta:** es una simulación radial sobre las lecturas del navegador. Muchos juegos usan zonas muertas por ejes u otras curvas, así que el resultado en un juego concreto puede diferir. No corrige el centro del stick: el círculo está en el (0, 0) ideal. Si el stick no llega a 1 en su recorrido, la salida filtrada tampoco llegará a 1. Las estadísticas cuentan fotogramas con lectura, no informes únicos del mando.
 - **Tabla de resultados:** depende de `localStorage`. Si el navegador lo bloquea, la prueba no se guarda y la tabla queda vacía; la página lo avisa al terminar la prueba.
+- **Comparador:** es descriptivo y compara como máximo 8 filas a la vez. Si las pruebas usaron umbrales distintos, el «% sobre umbral» no es directamente comparable. Las pruebas anteriores a la v1.5.0 no guardan el sesgo X e Y por separado y aparecen como «No disponible». La selección no se conserva al recargar la página.
 - **Los porcentajes son aproximaciones** de los valores que reporta el mando, no medidas físicas del recorrido.
 - **La Gamepad API no garantiza una frecuencia de muestreo fija.** Las muestras se recogen en cada fotograma, así que dependen de la frecuencia de tu pantalla.
 - **El eje horizontal de la gráfica estática reparte muestras, no segundos.** La gráfica del modo movimiento sí usa tiempo real.
