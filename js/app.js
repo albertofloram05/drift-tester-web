@@ -19,7 +19,7 @@ import { historyRows } from './history.js';
 import { renderHistoryTable, VERDICT } from './render.js';
 import { toggleSelection, pruneSelection, selectionText, limitText, buildItems, defaultReference, summaryText,
          referenceText, relationText, comparabilityNotes, DISCLAIMER } from './compare.js';
-import { renderCompareTable, renderReferenceSelect, renderNotes } from './compareView.js';
+import { renderCompareTable, renderReferenceSelect, renderNotes, renderChart } from './compareView.js';
 import { connectionAnnouncement, testAnnouncement, calibrationAnnouncement, stickDescriptionId } from './a11y.js';
 
 const reader = new GamepadReader();
@@ -562,6 +562,8 @@ $('compareClearBtn').addEventListener('click', () => {
 let compareOpen = false;
 let compareRef = null;   // clave de la fila de referencia (null: la más antigua)
 let allRows = [];        // filas de historyRows() sin filtrar
+let chartMetric = 'std'; // métrica de la tercera gráfica ('std' o 'above')
+let chartWidth = 0;      // ancho con el que se dibujaron las gráficas
 
 function renderComparator() {
   $('comparePanel').hidden = !compareOpen;
@@ -579,6 +581,10 @@ function renderComparator() {
   $('compareRelation').textContent = relationText(items);
   renderNotes($('compareNotes'), comparabilityNotes(items));
   renderCompareTable($('compareTableBody'), items, compareRef);
+  chartWidth = Math.floor($('chartX').clientWidth) || 640;
+  renderChart($('chartX'), items, 'meanX', { idPrefix: 'chartX', width: chartWidth });
+  renderChart($('chartY'), items, 'meanY', { idPrefix: 'chartY', width: chartWidth });
+  renderChart($('chartExtra'), items, chartMetric, { idPrefix: 'chartExtra', width: chartWidth });
   $('compareDisclaimer').textContent = DISCLAIMER;
 }
 
@@ -597,6 +603,21 @@ $('compareCloseBtn').addEventListener('click', () => {
 $('compareRef').addEventListener('change', e => {
   compareRef = e.target.value;
   renderComparator();
+});
+
+$('chartMetric').addEventListener('change', e => {
+  chartMetric = e.target.value;
+  renderComparator();
+});
+
+// Las gráficas se dibujan al ancho disponible: se redibujan solo si el ancho cambia (no al ocultarse la barra del móvil)
+let chartResizeFrame = 0;
+window.addEventListener('resize', () => {
+  if (!compareOpen) return;
+  cancelAnimationFrame(chartResizeFrame);
+  chartResizeFrame = requestAnimationFrame(() => {
+    if (Math.floor($('chartX').clientWidth) !== chartWidth) renderComparator();
+  });
 });
 
 /** Valores actuales de los controles de filtro. */

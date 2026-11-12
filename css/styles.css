@@ -975,3 +975,32 @@ input[type="date"] { color-scheme: dark; }          /* el selector de fecha del 
   font-size: 0.68rem;
   font-weight: 700;
 }
+
+/* ---------- Gráficas del comparador (v1.6.0) ---------- */
+.compare-sub { margin: 22px 0 4px; font-size: 1rem; text-align: center; }
+.chart-block { margin-top: 14px; text-align: left; }
+.chart-block + .compare-ref { margin-top: 18px; }
+.chart-title { margin: 0 0 6px; font-size: 0.9rem; font-weight: 600; text-align: center; }
+.chart-svg { display: block; width: 100%; height: auto; }
+.chart-grid { stroke: var(--border); stroke-width: 1; }
+.chart-zero { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 3; }
+.chart-tick { fill: var(--muted); font-size: 11px; font-family: var(--font-mono); }
+.chart-line { fill: none; stroke-width: 2; stroke-linejoin: round; }
+.chart-line.chart-left  { stroke: #60a5fa; }
+.chart-line.chart-right { stroke: #fbbf24; stroke-dasharray: 7 4; }
+.chart-pt { stroke: var(--card); stroke-width: 1.5; }
+.chart-pt.chart-left  { fill: #60a5fa; }
+.chart-pt.chart-right { fill: #fbbf24; }
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 18px;
+  margin: 6px 0 4px;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.leg-left  { color: #60a5fa; }
+.leg-right { color: #fbbf24; }

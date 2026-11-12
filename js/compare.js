@@ -203,6 +203,78 @@ export function buildSeries(items, metricKey) {
   return out;
 }
 
+// ---------- Gráficas: escalas y textos ----------
+
+const roundTo = v => Number(v.toFixed(10));
+
+/**
+ * Marcas «redondas» para un eje: pasos de 1, 2 o 5 por una potencia de 10.
+ * Devuelve { ticks, min, max, step }; min y max son la primera y la última marca.
+ * Si min y max coinciden (todo a cero), abre el rango en 'fallbackSpan'.
+ */
+export function niceTicks(min, max, target = 5, fallbackSpan = 1) {
+  if (!(max > min)) max = min + fallbackSpan;
+  const rough = (max - min) / (target - 1);
+  const mag = 10 ** Math.floor(Math.log10(rough));
+  const norm = rough / mag;
+  const step = roundTo((norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag);
+  const start = roundTo(Math.floor(min / step + 1e-9) * step);
+  const end = roundTo(Math.ceil(max / step - 1e-9) * step);
+  const n = Math.round((end - start) / step);
+  return { ticks: Array.from({ length: n + 1 }, (_, i) => roundTo(start + i * step)), min: start, max: end, step };
+}
+
+/** Decimales que necesita un paso de eje (0.05 → 2, 0.5 → 1, 20 → 0). */
+export function decimalsForStep(step) {
+  if (!(step > 0)) return 0;
+  return Math.min(6, Math.max(0, -Math.floor(Math.log10(step) + 1e-9)));
+}
+
+/** 'n' instantes repartidos a partes iguales entre t0 y t1 (uno solo si coinciden). */
+export function timeTicks(t0, t1, n = 4) {
+  if (!(t1 > t0)) return [t0];
+  return Array.from({ length: n }, (_, i) => t0 + ((t1 - t0) * i) / (n - 1));
+}
+
+/** Etiqueta de fecha de un eje: solo el día, o día y hora si todo ocurre en menos de 2 días. */
+export function formatTickTime(ms, spanMs) {
+  const d = new Date(ms);
+  const p = n => String(n).padStart(2, '0');
+  const day = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  return spanMs < 2 * 86400000 ? `${day} ${p(d.getHours())}:${p(d.getMinutes())}` : day;
+}
+
+/**
+ * Dominios de una gráfica a partir de sus series. null si no hay ningún punto.
+ * El eje Y siempre incluye el 0, para no exagerar variaciones pequeñas.
+ */
+export function buildChart(series, metricKey) {
+  const all = [...series.left, ...series.right];
+  if (all.length === 0) return null;
+  const times = all.map(p => p.time);
+  const values = all.map(p => p.value);
+  return {
+    t0: Math.min(...times),
+    t1: Math.max(...times),
+    y: niceTicks(Math.min(0, ...values), Math.max(0, ...values), 5, metricKey === 'above' ? 10 : 0.05),
+  };
+}
+
+export function chartEmptyText(series) {
+  return series.skipped > 0
+    ? 'No se puede dibujar: ninguna de las filas seleccionadas tiene a la vez una fecha válida y este dato.'
+    : 'No hay datos suficientes para dibujar esta gráfica.';
+}
+
+/** Avisos bajo una gráfica (pocos puntos, filas que no entran). */
+export function chartNotes(series) {
+  const notes = [];
+  const sizes = [series.left.length, series.right.length].filter(n => n > 0);
+  if (sizes.length > 0 && sizes.every(n => n === 1)) notes.push('Con un solo punto por stick no se ve evolución: se muestran solo los puntos.');
+  if (series.skipped > 0) notes.push(`${series.skipped === 1 ? '1 fila no aparece' : `${series.skipped} filas no aparecen`} en esta gráfica por no tener fecha válida o este dato.`);
+  return notes;
+}
+
 // ---------- CSV de la comparación ----------
 
 export const COMPARE_HEADER = [
